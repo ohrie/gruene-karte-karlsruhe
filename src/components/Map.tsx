@@ -526,7 +526,7 @@ function Legend({ parkOnly }: LegendProps) {
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 6, color: '#2d5a27', fontSize: 13 }}>
-        Grünkarte Karlsruhe
+        Grüne Karte Karlsruhe
       </div>
       {items.map(({ color, label }) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

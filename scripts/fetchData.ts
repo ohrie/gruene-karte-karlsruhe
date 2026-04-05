@@ -1,5 +1,5 @@
 /**
- * Lädt alle Geodaten für die Grünkarte Karlsruhe von Overpass herunter
+ * Lädt alle Geodaten für die Grüne Karte Karlsruhe von Overpass herunter
  * und speichert sie als GeoJSON in public/data/.
  *
  * Ausführen: npm run fetch-data
@@ -216,7 +216,7 @@ type QueryEntry = {
 };
 
 async function main() {
-  console.log('🌿 Grünkarte Karlsruhe — Daten werden geladen\n');
+  console.log('🌿 Grüne Karte Karlsruhe — Daten werden geladen\n');
 
   const queries: QueryEntry[] = [
     { name: 'Stadtgrenze', filename: 'boundary.geojson', query: BOUNDARY_QUERY },

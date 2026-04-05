@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Grünkarte Karlsruhe',
+  title: 'Grüne Karte Karlsruhe',
   description: 'Karte der Grünanlagen, Bäume und kühlen Orte in Karlsruhe',
 };
 
