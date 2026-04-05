@@ -18,6 +18,7 @@ export const COLORS = {
   playground: '#f0b870',
   playgroundEquipment: '#e09050',
   square: '#c2b6d3',         // gedämpftes Lavendel/Lila
+  flowerbed: '#f4b8d0',       // zartes Rosa
   path: '#98c468',           // abgestimmtes Grün – dunkler & gesättigter als Park
   pathArea: '#b2d88a',       // helles Grün – harmoniert mit Park/Wiese
   treeIndividual: '#7aaa3a', // olivgrün – dezenter, leicht gelblich
@@ -35,6 +36,8 @@ export const greenAreasFillLayer: LayerProps = {
   paint: {
     'fill-color': [
       'case',
+      ['==', ['get', 'leisure'], 'flowerbed'],
+      COLORS.flowerbed,
       ['in', ['get', 'leisure'], ['literal', ['park', 'garden', 'nature_reserve']]],
       COLORS.park,
       ['in', ['get', 'landuse'], ['literal', ['forest']]],

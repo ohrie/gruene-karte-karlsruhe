@@ -84,6 +84,8 @@ area(${AREA_ID})->.searchArea;
   relation["leisure"="park"](area.searchArea);
   way["leisure"="nature_reserve"](area.searchArea);
   relation["leisure"="nature_reserve"](area.searchArea);
+  way["leisure"="flowerbed"](area.searchArea);
+  relation["leisure"="flowerbed"](area.searchArea);
 );
 out body;
 >;
