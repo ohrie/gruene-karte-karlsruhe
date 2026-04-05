@@ -221,6 +221,7 @@ export const pathsLineLayer: LayerProps = {
 export const squaresFillLayer: LayerProps = {
   id: 'squares-fill',
   type: 'fill',
+  filter: ['has', 'name'],
   paint: {
     'fill-color': COLORS.square,
     'fill-opacity': 0.6,
@@ -230,6 +231,7 @@ export const squaresFillLayer: LayerProps = {
 export const squaresOutlineLayer: LayerProps = {
   id: 'squares-outline',
   type: 'line',
+  filter: ['has', 'name'],
   paint: {
     'line-color': '#9080b8',
     'line-width': 1.2,
