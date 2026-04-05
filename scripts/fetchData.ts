@@ -130,8 +130,6 @@ area(${AREA_ID})->.searchArea;
   relation["natural"="water"](area.searchArea);
   way["waterway"="riverbank"](area.searchArea);
   relation["waterway"="riverbank"](area.searchArea);
-  way["landuse"="basin"](area.searchArea);
-  way["landuse"="reservoir"](area.searchArea);
   way["waterway"~"^(river|stream|canal|ditch)$"](area.searchArea);
 );
 out body;
