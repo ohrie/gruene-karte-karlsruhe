@@ -37,8 +37,6 @@ area(${AREA_ID})->.searchArea;
 (
   way["leisure"="park"](area.searchArea);
   relation["leisure"="park"](area.searchArea);
-  way["leisure"="garden"](area.searchArea);
-  relation["leisure"="garden"](area.searchArea);
   way["leisure"="nature_reserve"](area.searchArea);
   relation["leisure"="nature_reserve"](area.searchArea);
 );
@@ -90,7 +88,7 @@ area(${AREA_ID})->.searchArea;
   way["landuse"="basin"](area.searchArea);
   way["landuse"="reservoir"](area.searchArea);
   way["leisure"="swimming_pool"](area.searchArea);
-  way["waterway"~"^(river|stream|canal|drain|ditch)$"](area.searchArea);
+  way["waterway"~"^(river|stream|canal|ditch)$"](area.searchArea);
 );
 out body;
 >;
@@ -149,8 +147,6 @@ area(${AREA_ID})->.searchArea;
 (
   way["place"="square"](area.searchArea);
   relation["place"="square"](area.searchArea);
-  way["highway"="pedestrian"]["area"="yes"](area.searchArea);
-  way["highway"="pedestrian"]["area:highway"](area.searchArea);
 );
 out body;
 >;

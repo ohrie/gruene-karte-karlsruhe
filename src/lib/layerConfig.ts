@@ -1,27 +1,27 @@
 import type { LayerProps } from '@vis.gl/react-maplibre';
 
 // ---------------------------------------------------------------------------
-// Farbpalette
+// Farbpalette — hell & freundlich
 // ---------------------------------------------------------------------------
 
 export const COLORS = {
-  park: '#2d5a27',
-  parkLight: '#3a7a35',
-  garden: '#2d5a27',
-  meadow: '#7ab648',
-  scrub: '#5a8a3e',
-  wood: '#3d6b2e',
-  grassland: '#8bc34a',
-  water: '#4a90d9',
-  waterLine: '#3a80c9',
-  bench: '#c17f24',
-  playground: '#e8a55a',
-  playgroundEquipment: '#d4813a',
-  square: '#b5c4b1',
-  path: '#a8c89a',
-  pathArea: '#c5dbb8',
-  treeIndividual: '#4a7c3f',
-  treeCluster: '#3a6b2f',
+  park: '#c8eaad',           // helles Wiesengrün
+  parkLight: '#d4f0bc',
+  garden: '#c8eaad',
+  meadow: '#7ec453',         // mittleres Grün, dunkler als Park
+  scrub: '#6aaa40',
+  wood: '#4a8830',
+  grassland: '#80c255',
+  water: '#7ec8f5',          // helles Blau
+  waterLine: '#5ab8f0',
+  bench: '#d4922e',
+  playground: '#f0b870',
+  playgroundEquipment: '#e09050',
+  square: '#c0aed8',         // gedämpftes Lavendel/Lila
+  path: '#98c468',           // abgestimmtes Grün – dunkler & gesättigter als Park
+  pathArea: '#b2d88a',       // helles Grün – harmoniert mit Park/Wiese
+  treeIndividual: '#7aaa3a', // olivgrün – dezenter, leicht gelblich
+  treeCluster: '#5a8a28',
   outsideMask: 'rgba(20, 20, 20, 0.55)',
 } as const;
 
@@ -53,8 +53,8 @@ export const greenAreasFillLayer: LayerProps = {
       'interpolate',
       ['linear'],
       ['zoom'],
-      10, 0.7,
-      16, 0.9,
+      10, 0.75,
+      16, 0.95,
     ],
   },
 };
@@ -63,9 +63,43 @@ export const greenAreasOutlineLayer: LayerProps = {
   id: 'green-areas-outline',
   type: 'line',
   paint: {
-    'line-color': COLORS.wood,
+    'line-color': '#6aaa40',
     'line-width': 0.8,
-    'line-opacity': 0.4,
+    'line-opacity': 0.35,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Park-Labels
+// ---------------------------------------------------------------------------
+
+export const parkLabelsLayer: LayerProps = {
+  id: 'park-labels',
+  type: 'symbol',
+  minzoom: 13,
+  filter: [
+    'all',
+    ['in', ['get', 'leisure'], ['literal', ['park', 'garden', 'nature_reserve']]],
+    ['has', 'name'],
+  ],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': [
+      'interpolate', ['linear'], ['zoom'],
+      13, 10,
+      15, 13,
+      17, 16,
+    ],
+    'text-anchor': 'center',
+    'text-max-width': 10,
+    'text-padding': 20,
+    'symbol-placement': 'point',
+  },
+  paint: {
+    'text-color': '#2d6a1a',
+    'text-halo-color': 'rgba(220, 245, 200, 0.9)',
+    'text-halo-width': 1.5,
   },
 };
 
@@ -108,6 +142,7 @@ export const waterLineLayer: LayerProps = {
 export const pathsAreaFillLayer: LayerProps = {
   id: 'paths-area-fill',
   type: 'fill',
+  minzoom: 14,
   filter: ['==', ['geometry-type'], 'Polygon'],
   paint: {
     'fill-color': COLORS.pathArea,
@@ -118,6 +153,7 @@ export const pathsAreaFillLayer: LayerProps = {
 export const pathsLineLayer: LayerProps = {
   id: 'paths-line',
   type: 'line',
+  minzoom: 14,
   filter: ['==', ['geometry-type'], 'LineString'],
   paint: {
     'line-color': COLORS.path,
@@ -166,7 +202,7 @@ export const squaresFillLayer: LayerProps = {
   type: 'fill',
   paint: {
     'fill-color': COLORS.square,
-    'fill-opacity': 0.65,
+    'fill-opacity': 0.6,
   },
 };
 
@@ -174,9 +210,35 @@ export const squaresOutlineLayer: LayerProps = {
   id: 'squares-outline',
   type: 'line',
   paint: {
-    'line-color': '#8fa88c',
-    'line-width': 1,
-    'line-opacity': 0.5,
+    'line-color': '#9080b8',
+    'line-width': 1.2,
+    'line-opacity': 0.6,
+  },
+};
+
+export const squareLabelsLayer: LayerProps = {
+  id: 'square-labels',
+  type: 'symbol',
+  minzoom: 14,
+  filter: ['has', 'name'],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': [
+      'interpolate', ['linear'], ['zoom'],
+      14, 9,
+      16, 12,
+      18, 15,
+    ],
+    'text-anchor': 'center',
+    'text-max-width': 8,
+    'text-padding': 15,
+    'symbol-placement': 'point',
+  },
+  paint: {
+    'text-color': '#4a3470',
+    'text-halo-color': 'rgba(240, 235, 250, 0.9)',
+    'text-halo-width': 1.5,
   },
 };
 
@@ -210,7 +272,7 @@ export const playgroundsOutlineLayer: LayerProps = {
 export const playgroundEquipmentLayer: LayerProps = {
   id: 'playground-equipment',
   type: 'circle',
-  minzoom: 15,
+  minzoom: 17,
   paint: {
     'circle-color': [
       'match',
@@ -221,7 +283,7 @@ export const playgroundEquipmentLayer: LayerProps = {
       'sandpit', '#fff176',
       'springy', '#f06292',
       'roundabout', '#64b5f6',
-      '#ba68c8', // default
+      '#ba68c8',
     ],
     'circle-radius': 4,
     'circle-stroke-color': '#fff',
@@ -248,7 +310,53 @@ export const benchesLayer: LayerProps = {
 };
 
 // ---------------------------------------------------------------------------
-// Bäume — geclustert
+// Bäume — Einzelbäume
+// Zufällige Farbvariation via Feature-ID (Pseudo-Zufall, kein Netzwerk-Request)
+// ---------------------------------------------------------------------------
+
+export const treesIndividualLayer: LayerProps = {
+  id: 'trees-individual',
+  type: 'circle',
+  minzoom: 14,
+  paint: {
+    // 6 olive-gelbliche Grüntöne, LFDBNR als Zahl sicherstellen um schwarze Punkte zu vermeiden
+    'circle-color': [
+      'match',
+      ['%', ['to-number', ['get', 'LFDBNR'], 0], 6],
+      0, '#7aaa3a',
+      1, '#8ab840',
+      2, '#6a9e30',
+      3, '#90c045',
+      4, '#7db535',
+      '#82b23c', // 5 + default
+    ],
+    'circle-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      14, 0.0,
+      15, 0.25,
+      16, 0.55,
+      17, 0.75,
+      18, 0.9,
+    ],
+    'circle-radius': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      14, 1,
+      15, 1.5,
+      16, 3,
+      17, 6,
+      18, 10,
+      20, 18,
+    ],
+    'circle-stroke-width': 0,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Bäume — geclustert (nur für Source mit cluster:true benötigt)
 // ---------------------------------------------------------------------------
 
 export const treesClusterLayer: LayerProps = {
@@ -261,8 +369,8 @@ export const treesClusterLayer: LayerProps = {
       'interpolate',
       ['linear'],
       ['zoom'],
-      10, 0.4,
-      13, 0.25,
+      10, 0.45,
+      13, 0.3,
     ],
     'circle-radius': [
       'step',
@@ -272,8 +380,7 @@ export const treesClusterLayer: LayerProps = {
       18, 500,
       24,
     ],
-    'circle-stroke-color': '#2d5a27',
-    'circle-stroke-width': 0.5,
+    'circle-stroke-width': 0,
   },
 };
 
@@ -293,39 +400,50 @@ export const treesClusterCountLayer: LayerProps = {
   },
 };
 
-// Einzelne Bäume (ungeclusterte Punkte)
-export const treesIndividualLayer: LayerProps = {
-  id: 'trees-individual',
-  type: 'circle',
-  filter: ['!', ['has', 'point_count']],
+// ---------------------------------------------------------------------------
+// Wasser-Labels
+// ---------------------------------------------------------------------------
+
+// Flüsse (LineString) — Text folgt der Linie
+export const waterLineLabelsLayer: LayerProps = {
+  id: 'water-line-labels',
+  type: 'symbol',
+  minzoom: 13,
+  filter: ['all', ['==', ['geometry-type'], 'LineString'], ['has', 'name']],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': ['interpolate', ['linear'], ['zoom'], 13, 9, 16, 13],
+    'text-max-width': 6,
+    'symbol-placement': 'line',
+    'text-pitch-alignment': 'viewport',
+  },
   paint: {
-    'circle-color': COLORS.treeIndividual,
-    'circle-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      13, 0.3,
-      16, 0.65,
-      18, 0.8,
-    ],
-    'circle-radius': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      10, 2,
-      14, 4,
-      16, 6,
-      18, 9,
-    ],
-    'circle-stroke-color': '#2d5a27',
-    'circle-stroke-width': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      14, 0,
-      16, 0.5,
-      18, 1,
-    ],
+    'text-color': '#1a6090',
+    'text-halo-color': 'rgba(200, 235, 255, 0.9)',
+    'text-halo-width': 1.5,
+  },
+};
+
+// Seen / Wasserflächen (Polygon) — Text zentral
+export const waterAreaLabelsLayer: LayerProps = {
+  id: 'water-area-labels',
+  type: 'symbol',
+  minzoom: 13,
+  filter: ['all', ['==', ['geometry-type'], 'Polygon'], ['has', 'name']],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': ['interpolate', ['linear'], ['zoom'], 13, 9, 16, 14],
+    'text-anchor': 'center',
+    'text-max-width': 8,
+    'text-padding': 10,
+    'symbol-placement': 'point',
+  },
+  paint: {
+    'text-color': '#1a6090',
+    'text-halo-color': 'rgba(200, 235, 255, 0.9)',
+    'text-halo-width': 1.5,
   },
 };
 

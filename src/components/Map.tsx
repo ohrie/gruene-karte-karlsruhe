@@ -8,18 +8,19 @@ import type { FeatureCollection, Feature, Polygon, MultiPolygon, Position } from
 import {
   greenAreasFillLayer,
   greenAreasOutlineLayer,
+  parkLabelsLayer,
   waterFillLayer,
   waterLineLayer,
+  waterLineLabelsLayer,
+  waterAreaLabelsLayer,
   pathsAreaFillLayer,
   pathsLineLayer,
   squaresFillLayer,
   squaresOutlineLayer,
+  squareLabelsLayer,
   playgroundsFillLayer,
   playgroundsOutlineLayer,
   playgroundEquipmentLayer,
-  benchesLayer,
-  treesClusterLayer,
-  treesClusterCountLayer,
   treesIndividualLayer,
   outsideMaskLayer,
 } from '@/lib/layerConfig';
@@ -152,6 +153,7 @@ export default function GrunkartMap() {
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle="https://tiles.openfreemap.org/styles/positron"
+        hash={true}
         onError={handleMapError}
       >
         {/* 1. Grünflächen (unterste Ebene) */}
@@ -162,11 +164,11 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 2. Wasser */}
+        {/* 2. Wasser — Linie zuerst, damit Fläche die Linie überdeckt */}
         {water && (
           <Source id="water" type="geojson" data={water}>
-            <Layer {...waterFillLayer} />
             <Layer {...waterLineLayer} />
+            <Layer {...waterFillLayer} />
           </Source>
         )}
 
@@ -201,33 +203,42 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 7. Sitzbänke */}
-        {benches && (
+        {/* 7. Sitzbänke — ausgeblendet */}
+        {/* {benches && (
           <Source id="benches" type="geojson" data={benches}>
             <Layer {...benchesLayer} />
           </Source>
-        )}
+        )} */}
 
-        {/* 8. Bäume (mit Clustering) */}
+        {/* 8. Bäume (ab Zoom 14) */}
         {trees && (
-          <Source
-            id="trees"
-            type="geojson"
-            data={trees}
-            cluster={true}
-            clusterMaxZoom={14}
-            clusterRadius={40}
-          >
-            <Layer {...treesClusterLayer} />
-            <Layer {...treesClusterCountLayer} />
+          <Source id="trees" type="geojson" data={trees}>
             <Layer {...treesIndividualLayer} />
           </Source>
         )}
 
-        {/* 9. Außenmaske — MUSS als letztes gerendert werden */}
+        {/* 9. Außenmaske */}
         {outsideMask && (
           <Source id="outside-mask" type="geojson" data={outsideMask}>
             <Layer {...outsideMaskLayer} />
+          </Source>
+        )}
+
+        {/* 10. Labels — immer ganz oben (eigene Sources für korrekte Renderreihenfolge) */}
+        {greenAreas && (
+          <Source id="park-labels-src" type="geojson" data={greenAreas}>
+            <Layer {...parkLabelsLayer} />
+          </Source>
+        )}
+        {squares && (
+          <Source id="square-labels-src" type="geojson" data={squares}>
+            <Layer {...squareLabelsLayer} />
+          </Source>
+        )}
+        {water && (
+          <Source id="water-labels-src" type="geojson" data={water}>
+            <Layer {...waterLineLabelsLayer} />
+            <Layer {...waterAreaLabelsLayer} />
           </Source>
         )}
       </Map>
@@ -312,15 +323,15 @@ function Attribution() {
 
 function Legend() {
   const items = [
-    { color: '#2d5a27', label: 'Parks & Gärten' },
-    { color: '#7ab648', label: 'Wiesen & Grünflächen' },
-    { color: '#3d6b2e', label: 'Wald' },
-    { color: '#5a8a3e', label: 'Gebüsch & Heide' },
-    { color: '#4a90d9', label: 'Wasser' },
-    { color: '#e8a55a', label: 'Spielplätze' },
-    { color: '#b5c4b1', label: 'Plätze' },
-    { color: '#4a7c3f', label: 'Bäume' },
-    { color: '#c17f24', label: 'Sitzbänke' },
+    { color: '#c8eaad', label: 'Parks & Gärten' },
+    { color: '#7ec453', label: 'Wiesen & Grünflächen' },
+    { color: '#4a8830', label: 'Wald' },
+    { color: '#6aaa40', label: 'Gebüsch & Heide' },
+    { color: '#7ec8f5', label: 'Wasser' },
+    { color: '#f0b870', label: 'Spielplätze' },
+    { color: '#c8d8c4', label: 'Plätze' },
+    { color: '#3a8228', label: 'Bäume' },
+    { color: '#d4922e', label: 'Sitzbänke' },
   ];
 
   return (
