@@ -265,6 +265,31 @@ export const playgroundsOutlineLayer: LayerProps = {
   },
 };
 
+export const playgroundLabelsLayer: LayerProps = {
+  id: 'playground-labels',
+  type: 'symbol',
+  minzoom: 16,
+  filter: ['has', 'name'],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': [
+      'interpolate', ['linear'], ['zoom'],
+      16, 10,
+      18, 13,
+    ],
+    'text-anchor': 'center',
+    'text-max-width': 8,
+    'text-padding': 10,
+    'symbol-placement': 'point',
+  },
+  paint: {
+    'text-color': '#c07830',
+    'text-halo-color': 'rgba(255, 240, 210, 0.9)',
+    'text-halo-width': 1.5,
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Spielgeräte
 // ---------------------------------------------------------------------------
@@ -319,26 +344,39 @@ export const treesIndividualLayer: LayerProps = {
   type: 'circle',
   minzoom: 14,
   paint: {
-    // 6 olive-gelbliche Grüntöne, LFDBNR als Zahl sicherstellen um schwarze Punkte zu vermeiden
+    // Bäume innerhalb von Grünflächen: bisherige Olivgrün-Töne
+    // Bäume außerhalb: helle, gedämpfte Grüntöne (Fokus bleibt auf Grünflächen)
     'circle-color': [
-      'match',
-      ['%', ['to-number', ['get', 'LFDBNR'], 0], 6],
-      0, '#7aaa3a',
-      1, '#8ab840',
-      2, '#6a9e30',
-      3, '#90c045',
-      4, '#7db535',
-      '#82b23c', // 5 + default
+      'case',
+      ['==', ['get', 'insideGreenArea'], 1],
+      ['match',
+        ['%', ['to-number', ['get', 'LFDBNR'], 0], 6],
+        0, '#7aaa3a',
+        1, '#8ab840',
+        2, '#6a9e30',
+        3, '#90c045',
+        4, '#7db535',
+        '#82b23c', // 5 + default
+      ],
+      ['match',
+        ['%', ['to-number', ['get', 'LFDBNR'], 0], 6],
+        0, '#b8d498',
+        1, '#c2da9e',
+        2, '#aece90',
+        3, '#cce6a6',
+        4, '#b6d294',
+        '#bcd89a', // 5 + default
+      ],
     ],
     'circle-opacity': [
       'interpolate',
       ['linear'],
       ['zoom'],
       14, 0.0,
-      15, 0.25,
-      16, 0.55,
-      17, 0.75,
-      18, 0.9,
+      15, ['case', ['==', ['get', 'insideGreenArea'], 1], 0.25, 0.15],
+      16, ['case', ['==', ['get', 'insideGreenArea'], 1], 0.55, 0.30],
+      17, ['case', ['==', ['get', 'insideGreenArea'], 1], 0.75, 0.45],
+      18, ['case', ['==', ['get', 'insideGreenArea'], 1], 0.9, 0.55],
     ],
     'circle-radius': [
       'interpolate',

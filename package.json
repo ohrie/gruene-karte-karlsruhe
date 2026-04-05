@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "fetch-data": "tsx scripts/fetchData.ts"
+    "fetch-data": "tsx scripts/fetchData.ts",
+    "process-green-features": "tsx scripts/processGreenAreaFeatures.ts"
   },
   "dependencies": {
     "next": "^16.2.2",

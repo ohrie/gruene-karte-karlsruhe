@@ -20,6 +20,7 @@ import {
   squareLabelsLayer,
   playgroundsFillLayer,
   playgroundsOutlineLayer,
+  playgroundLabelsLayer,
   playgroundEquipmentLayer,
   treesIndividualLayer,
   outsideMaskLayer,
@@ -155,6 +156,10 @@ export default function GrunkartMap() {
         mapStyle="https://tiles.openfreemap.org/styles/positron"
         hash={true}
         onError={handleMapError}
+        attributionControl={{
+          customAttribution:
+            'Bäume: <a href="https://transparenz.karlsruhe.de/dataset/fachplane-baumkataster" target="_blank" rel="noopener">Fachpläne – Baumkataster</a>, Stadt Karlsruhe – <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>',
+        }}
       >
         {/* 1. Grünflächen (unterste Ebene) */}
         {greenAreas && (
@@ -235,6 +240,11 @@ export default function GrunkartMap() {
             <Layer {...squareLabelsLayer} />
           </Source>
         )}
+        {playgrounds && (
+          <Source id="playground-labels-src" type="geojson" data={playgrounds}>
+            <Layer {...playgroundLabelsLayer} />
+          </Source>
+        )}
         {water && (
           <Source id="water-labels-src" type="geojson" data={water}>
             <Layer {...waterLineLabelsLayer} />
@@ -242,9 +252,6 @@ export default function GrunkartMap() {
           </Source>
         )}
       </Map>
-
-      {/* Lizenzhinweis */}
-      <Attribution />
 
       {/* Ladeindikator */}
       {!dataLoaded && (
@@ -269,50 +276,6 @@ export default function GrunkartMap() {
 
       {/* Legende */}
       <Legend />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Lizenzhinweis
-// ---------------------------------------------------------------------------
-
-function Attribution() {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        bottom: 8,
-        left: 8,
-        background: 'rgba(255,255,255,0.85)',
-        borderRadius: 4,
-        padding: '3px 7px',
-        fontSize: 10,
-        lineHeight: 1.5,
-        color: '#555',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
-        maxWidth: 420,
-        pointerEvents: 'auto',
-      }}
-    >
-      Bäume:{' '}
-      <a
-        href="https://transparenz.karlsruhe.de/dataset/fachplane-baumkataster"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: '#2d5a27' }}
-      >
-        Fachpläne – Baumkataster
-      </a>
-      , Stadt Karlsruhe –{' '}
-      <a
-        href="https://www.govdata.de/dl-de/by-2-0"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: '#2d5a27' }}
-      >
-        dl-de/by-2-0
-      </a>
     </div>
   );
 }
