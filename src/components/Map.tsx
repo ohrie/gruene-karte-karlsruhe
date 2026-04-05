@@ -358,6 +358,8 @@ type LegendProps = {
 };
 
 function Legend({ parkOnly }: LegendProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
   const items = parkOnly
     ? [
       { color: '#c8eaad', label: 'Parks' },
@@ -387,14 +389,43 @@ function Legend({ parkOnly }: LegendProps) {
         fontSize: 12,
         lineHeight: 1.7,
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        pointerEvents: 'none',
         minWidth: 160,
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 6, color: '#2d5a27', fontSize: 13 }}>
-        Grüne Karte Karlsruhe
-      </div>
-      {items.map(({ color, label }) => (
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Legende aufklappen' : 'Legende zuklappen'}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          marginBottom: collapsed ? 0 : 6,
+          width: '100%',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          color: '#2d5a27',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontWeight: 700, fontSize: 13 }}>
+          Grüne Karte Karlsruhe
+        </span>
+        {collapsed ? (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 9L7 4.5L11.5 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </button>
+      {!collapsed && items.map(({ color, label }) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
             style={{
