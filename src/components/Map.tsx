@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Map, Source, Layer } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { FeatureCollection, Feature, Polygon, MultiPolygon, Position } from 'geojson';
@@ -32,6 +32,20 @@ import {
 
 const KA_CENTER: [number, number] = [8.4037, 49.0069];
 const KA_ZOOM = 13;
+
+type Ring = Position[];
+
+type BBox = {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+};
+
+type PolygonEntry = {
+  bbox: BBox;
+  rings: Ring[];
+};
 
 // ---------------------------------------------------------------------------
 // Außenmaske aufbauen
@@ -73,6 +87,102 @@ function buildOutsideMask(boundaryFeature: Feature): Feature<Polygon> {
   };
 }
 
+function ringBBox(ring: Ring): BBox {
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+  for (const [lng, lat] of ring) {
+    if (lng < minLng) minLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lng > maxLng) maxLng = lng;
+    if (lat > maxLat) maxLat = lat;
+  }
+  return { minLng, minLat, maxLng, maxLat };
+}
+
+function unionBBox(boxes: BBox[]): BBox {
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+  for (const box of boxes) {
+    if (box.minLng < minLng) minLng = box.minLng;
+    if (box.minLat < minLat) minLat = box.minLat;
+    if (box.maxLng > maxLng) maxLng = box.maxLng;
+    if (box.maxLat > maxLat) maxLat = box.maxLat;
+  }
+  return { minLng, minLat, maxLng, maxLat };
+}
+
+function bboxContainsPoint(bbox: BBox, lng: number, lat: number): boolean {
+  return lng >= bbox.minLng && lng <= bbox.maxLng && lat >= bbox.minLat && lat <= bbox.maxLat;
+}
+
+function ringContainsPoint(ring: Ring, lng: number, lat: number): boolean {
+  let inside = false;
+  const n = ring.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function polygonContainsPoint(rings: Ring[], lng: number, lat: number): boolean {
+  if (!ringContainsPoint(rings[0], lng, lat)) return false;
+  for (let i = 1; i < rings.length; i++) {
+    if (ringContainsPoint(rings[i], lng, lat)) return false;
+  }
+  return true;
+}
+
+function anyPolygonContainsPoint(polygons: PolygonEntry[], lng: number, lat: number): boolean {
+  for (const polygon of polygons) {
+    if (!bboxContainsPoint(polygon.bbox, lng, lat)) continue;
+    if (polygonContainsPoint(polygon.rings, lng, lat)) return true;
+  }
+  return false;
+}
+
+function collectVertices(geometry: Feature['geometry'] | null | undefined): Position[] {
+  const vertices: Position[] = [];
+  if (!geometry || !('coordinates' in geometry)) return vertices;
+
+  function recurse(coords: unknown): void {
+    if (!Array.isArray(coords) || coords.length === 0) return;
+    if (typeof coords[0] === 'number') {
+      vertices.push(coords as Position);
+      return;
+    }
+    for (const sub of coords) recurse(sub);
+  }
+
+  recurse(geometry.coordinates);
+  return vertices;
+}
+
+function extractPolygonEntries(feature: Feature): PolygonEntry[] {
+  const entries: PolygonEntry[] = [];
+  const geometry = feature.geometry;
+  if (!geometry) return entries;
+
+  if (geometry.type === 'Polygon') {
+    const rings = geometry.coordinates as Ring[];
+    entries.push({ bbox: unionBBox(rings.map(ringBBox)), rings });
+  } else if (geometry.type === 'MultiPolygon') {
+    for (const polygonCoords of geometry.coordinates) {
+      const rings = polygonCoords as Ring[];
+      entries.push({ bbox: unionBBox(rings.map(ringBBox)), rings });
+    }
+  }
+
+  return entries;
+}
+
 // ---------------------------------------------------------------------------
 // Daten laden
 // ---------------------------------------------------------------------------
@@ -98,6 +208,7 @@ export default function GrunkartMap() {
   const [squares, setSquares] = useState<FeatureCollection | null>(null);
   const [outsideMask, setOutsideMask] = useState<FeatureCollection | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [parkOnly, setParkOnly] = useState(false);
 
   useEffect(() => {
     const files = [
@@ -144,6 +255,47 @@ export default function GrunkartMap() {
     console.error('MapLibre Fehler:', e.error);
   }, []);
 
+  const visibleGreenAreas = useMemo<FeatureCollection | null>(() => {
+    if (!greenAreas) return null;
+    if (!parkOnly) return greenAreas;
+
+    const parkPolygons: PolygonEntry[] = [];
+    for (const feature of greenAreas.features) {
+      if (feature.properties?.leisure !== 'park') continue;
+      parkPolygons.push(...extractPolygonEntries(feature));
+    }
+
+    return {
+      ...greenAreas,
+      features: greenAreas.features.filter(
+        (feature) => {
+          if (feature.properties?.leisure === 'park') return true;
+
+          const vertices = collectVertices(feature.geometry);
+          return vertices.some(([lng, lat]) => anyPolygonContainsPoint(parkPolygons, lng, lat));
+        }
+      ),
+    };
+  }, [greenAreas, parkOnly]);
+
+  const visibleTrees = useMemo<FeatureCollection | null>(() => {
+    if (!trees) return null;
+    if (!parkOnly) return trees;
+    return {
+      ...trees,
+      features: trees.features.filter((feature) => feature.properties?.['in-park'] === 1),
+    };
+  }, [trees, parkOnly]);
+
+  const visiblePaths = useMemo<FeatureCollection | null>(() => {
+    if (!paths) return null;
+    if (!parkOnly) return paths;
+    return {
+      ...paths,
+      features: paths.features.filter((feature) => feature.properties?.['in-park'] === 1),
+    };
+  }, [paths, parkOnly]);
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <Map
@@ -162,8 +314,8 @@ export default function GrunkartMap() {
         }}
       >
         {/* 1. Grünflächen (unterste Ebene) */}
-        {greenAreas && (
-          <Source id="green-areas" type="geojson" data={greenAreas}>
+        {visibleGreenAreas && (
+          <Source id="green-areas" type="geojson" data={visibleGreenAreas}>
             <Layer {...greenAreasFillLayer} />
             <Layer {...greenAreasOutlineLayer} />
           </Source>
@@ -178,15 +330,15 @@ export default function GrunkartMap() {
         )}
 
         {/* 3. Wege */}
-        {paths && (
-          <Source id="paths" type="geojson" data={paths}>
+        {visiblePaths && (
+          <Source id="paths" type="geojson" data={visiblePaths}>
             <Layer {...pathsAreaFillLayer} />
             <Layer {...pathsLineLayer} />
           </Source>
         )}
 
         {/* 4. Plätze */}
-        {squares && (
+        {!parkOnly && squares && (
           <Source id="squares" type="geojson" data={squares}>
             <Layer {...squaresFillLayer} />
             <Layer {...squaresOutlineLayer} />
@@ -194,7 +346,7 @@ export default function GrunkartMap() {
         )}
 
         {/* 5. Spielplätze */}
-        {playgrounds && (
+        {!parkOnly && playgrounds && (
           <Source id="playgrounds" type="geojson" data={playgrounds}>
             <Layer {...playgroundsFillLayer} />
             <Layer {...playgroundsOutlineLayer} />
@@ -202,7 +354,7 @@ export default function GrunkartMap() {
         )}
 
         {/* 6. Spielgeräte */}
-        {playgroundEquipment && (
+        {!parkOnly && playgroundEquipment && (
           <Source id="playground-equipment" type="geojson" data={playgroundEquipment}>
             <Layer {...playgroundEquipmentLayer} />
           </Source>
@@ -216,8 +368,8 @@ export default function GrunkartMap() {
         )} */}
 
         {/* 8. Bäume (ab Zoom 14) */}
-        {trees && (
-          <Source id="trees" type="geojson" data={trees}>
+        {visibleTrees && (
+          <Source id="trees" type="geojson" data={visibleTrees}>
             <Layer {...treesIndividualLayer} />
           </Source>
         )}
@@ -230,17 +382,17 @@ export default function GrunkartMap() {
         )}
 
         {/* 10. Labels — immer ganz oben (eigene Sources für korrekte Renderreihenfolge) */}
-        {greenAreas && (
-          <Source id="park-labels-src" type="geojson" data={greenAreas}>
+        {visibleGreenAreas && (
+          <Source id="park-labels-src" type="geojson" data={visibleGreenAreas}>
             <Layer {...parkLabelsLayer} />
           </Source>
         )}
-        {squares && (
+        {!parkOnly && squares && (
           <Source id="square-labels-src" type="geojson" data={squares}>
             <Layer {...squareLabelsLayer} />
           </Source>
         )}
-        {playgrounds && (
+        {!parkOnly && playgrounds && (
           <Source id="playground-labels-src" type="geojson" data={playgrounds}>
             <Layer {...playgroundLabelsLayer} />
           </Source>
@@ -274,8 +426,21 @@ export default function GrunkartMap() {
         </div>
       )}
 
-      {/* Legende */}
-      <Legend />
+      <div
+        style={{
+          position: 'absolute',
+          right: 12,
+          bottom: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 10,
+          zIndex: 2,
+        }}
+      >
+        <Legend parkOnly={parkOnly} />
+        <ParkModeSwitcher parkOnly={parkOnly} onChange={setParkOnly} />
+      </div>
     </div>
   );
 }
@@ -284,25 +449,63 @@ export default function GrunkartMap() {
 // Legende
 // ---------------------------------------------------------------------------
 
-function Legend() {
-  const items = [
-    { color: '#c8eaad', label: 'Parks & Gärten' },
-    { color: '#7ec453', label: 'Wiesen & Grünflächen' },
-    { color: '#4a8830', label: 'Wald' },
-    { color: '#6aaa40', label: 'Gebüsch & Heide' },
-    { color: '#7ec8f5', label: 'Wasser' },
-    { color: '#f0b870', label: 'Spielplätze' },
-    { color: '#c8d8c4', label: 'Plätze' },
-    { color: '#3a8228', label: 'Bäume' },
-    { color: '#d4922e', label: 'Sitzbänke' },
-  ];
+type ParkModeSwitcherProps = {
+  parkOnly: boolean;
+  onChange: (active: boolean) => void;
+};
+
+function ParkModeSwitcher({ parkOnly, onChange }: ParkModeSwitcherProps) {
+  return (
+    <button
+      type="button"
+      aria-pressed={parkOnly}
+      onClick={() => onChange(!parkOnly)}
+      style={{
+        border: '1px solid rgba(62, 108, 49, 0.35)',
+        borderRadius: 10,
+        background: 'rgba(255,255,255,0.95)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        color: '#22481d',
+        fontSize: 12,
+        fontWeight: 700,
+        padding: '8px 12px',
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+    >
+      {parkOnly ? 'Modus: Nur Parks' : 'Modus: Alle Grünflächen'}
+    </button>
+  );
+}
+
+type LegendProps = {
+  parkOnly: boolean;
+};
+
+function Legend({ parkOnly }: LegendProps) {
+  const items = parkOnly
+    ? [
+      { color: '#c8eaad', label: 'Parks (leisure=park)' },
+      { color: '#7ec8f5', label: 'Wasser' },
+      { color: '#98c468', label: 'Wege im Park' },
+      { color: '#3a8228', label: 'Bäume im Park' },
+    ]
+    : [
+      { color: '#c8eaad', label: 'Parks & Gärten' },
+      { color: '#7ec453', label: 'Wiesen & Grünflächen' },
+      { color: '#4a8830', label: 'Wald' },
+      { color: '#6aaa40', label: 'Gebüsch & Heide' },
+      { color: '#7ec8f5', label: 'Wasser' },
+      { color: '#f0b870', label: 'Spielplätze' },
+      { color: '#c8d8c4', label: 'Plätze' },
+      { color: '#3a8228', label: 'Bäume' },
+      { color: '#98c468', label: 'Wege' },
+      { color: '#d4922e', label: 'Sitzbänke' },
+    ];
 
   return (
     <div
       style={{
-        position: 'absolute',
-        bottom: 24,
-        right: 12,
         background: 'rgba(255,255,255,0.92)',
         borderRadius: 8,
         padding: '10px 14px',

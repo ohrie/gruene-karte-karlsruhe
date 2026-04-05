@@ -1,8 +1,9 @@
 /**
  * Verarbeitet baumkataster.geojson und paths.geojson gegen green-areas.geojson:
  *
- * Bäume: Setzt insideGreenArea: 1 | 0 pro Feature (Point-in-Polygon)
- * Wege:  Entfernt alle Features, bei denen kein Vertex in einer Grünfläche liegt
+ * Bäume: Setzt insideGreenArea: 1 | 0 und in-park: 1 | 0 pro Feature
+ * Wege:  Entfernt alle Features, bei denen kein Vertex in einer Grünfläche liegt,
+ *        und setzt in-park: 1 | 0 auf den verbleibenden Features
  *
  * Ausführung: npm run process-green-features
  */
@@ -57,7 +58,7 @@ function unionBBox(boxes: BBox[]): BBox {
 
 function bboxContainsPoint(bbox: BBox, lng: number, lat: number): boolean {
   return lng >= bbox.minLng && lng <= bbox.maxLng &&
-         lat >= bbox.minLat && lat <= bbox.maxLat;
+    lat >= bbox.minLat && lat <= bbox.maxLat;
 }
 
 /** Ray Casting: prüft ob (lng, lat) innerhalb eines Rings liegt */
@@ -68,7 +69,7 @@ function ringContainsPoint(ring: Ring, lng: number, lat: number): boolean {
     const [xi, yi] = ring[i];
     const [xj, yj] = ring[j];
     if ((yi > lat) !== (yj > lat) &&
-        lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
       inside = !inside;
     }
   }
@@ -113,6 +114,11 @@ function extractPolygonEntries(feature: any): PolygonEntry[] {
     }
   }
   return entries;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isParkFeature(feature: any): boolean {
+  return feature?.properties?.leisure === 'park';
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +174,15 @@ for (const feature of [...greenAreasGeoJSON.features, ...playgroundsGeoJSON.feat
 }
 console.log(`  ${greenPolygons.length} Polygone/Teilflächen extrahiert (inkl. Spielplätze)`);
 
+const parkPolygons: PolygonEntry[] = [];
+for (const feature of greenAreasGeoJSON.features) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const f = feature as any;
+  if (!isParkFeature(f)) continue;
+  parkPolygons.push(...extractPolygonEntries(f));
+}
+console.log(`  ${parkPolygons.length} Park-Polygone/Teilflächen extrahiert`);
+
 // ---------------------------------------------------------------------------
 // 1. Baumkataster verarbeiten
 // ---------------------------------------------------------------------------
@@ -182,14 +197,18 @@ let treesOutside = 0;
 for (const feature of treesGeoJSON.features) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const f = feature as any;
+  if (!f.properties || typeof f.properties !== 'object') f.properties = {};
   if (!f.geometry || f.geometry.type !== 'Point') {
     f.properties.insideGreenArea = 0;
+    f.properties['in-park'] = 0;
     treesOutside++;
     continue;
   }
   const [lng, lat] = f.geometry.coordinates as [number, number];
   const inside = anyPolygonContainsPoint(greenPolygons, lng, lat) ? 1 : 0;
+  const inPark = anyPolygonContainsPoint(parkPolygons, lng, lat) ? 1 : 0;
   f.properties.insideGreenArea = inside;
+  f.properties['in-park'] = inPark;
   if (inside) treesInside++; else treesOutside++;
 }
 
@@ -211,14 +230,24 @@ let pathsKept = 0;
 const filteredFeatures = pathsGeoJSON.features.filter((feature) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const f = feature as any;
+  if (!f.properties || typeof f.properties !== 'object') f.properties = {};
+  let hasGreenVertex = false;
+  let inPark = 0;
   const vertices = collectVertices(f.geometry);
+
   for (const [lng, lat] of vertices) {
+    if (inPark === 0 && anyPolygonContainsPoint(parkPolygons, lng, lat)) {
+      inPark = 1;
+    }
     if (anyPolygonContainsPoint(greenPolygons, lng, lat)) {
-      pathsKept++;
-      return true;
+      hasGreenVertex = true;
     }
   }
-  return false;
+
+  if (!hasGreenVertex) return false;
+  f.properties['in-park'] = inPark;
+  pathsKept++;
+  return true;
 });
 
 console.log(`  ${pathsKept} von ${totalPaths} Wegen behalten (${totalPaths - pathsKept} entfernt)`);
