@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Map, Source, Layer } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import type { FilterSpecification } from 'maplibre-gl';
 import type { FeatureCollection, Feature, Polygon, MultiPolygon, Position } from 'geojson';
 import { registerTableTennisIcon } from '@/lib/tableTennisIcon';
 
@@ -149,32 +150,12 @@ export default function GrunkartMap() {
     console.error('MapLibre Fehler:', e.error);
   }, []);
 
-  const visibleGreenAreas = useMemo<FeatureCollection | null>(() => {
-    if (!greenAreas) return null;
-    if (!parkOnly) return greenAreas;
-    return {
-      ...greenAreas,
-      features: greenAreas.features.filter((f) => f.properties?.['in-park'] === 1),
-    };
-  }, [greenAreas, parkOnly]);
-
-  const visibleTrees = useMemo<FeatureCollection | null>(() => {
-    if (!trees) return null;
-    if (!parkOnly) return trees;
-    return {
-      ...trees,
-      features: trees.features.filter((feature) => feature.properties?.['in-park'] === 1),
-    };
-  }, [trees, parkOnly]);
-
-  const visiblePaths = useMemo<FeatureCollection | null>(() => {
-    if (!paths) return null;
-    if (!parkOnly) return paths;
-    return {
-      ...paths,
-      features: paths.features.filter((feature) => feature.properties?.['in-park'] === 1),
-    };
-  }, [paths, parkOnly]);
+  // MapLibre filter expression für Park-Only-Modus — wird direkt an Layer übergeben,
+  // kein JS-Array-Durchlauf beim Umschalten nötig.
+  // true = kein Filter (alle Features zeigen); wichtig: undefined würde den vorherigen Filter nicht löschen
+  const parkFilter: FilterSpecification = parkOnly
+    ? (['==', ['get', 'in-park'], 1] as FilterSpecification)
+    : true;
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -197,10 +178,12 @@ export default function GrunkartMap() {
         }}
       >
         {/* 1. Grünflächen (unterste Ebene) */}
-        {visibleGreenAreas && (
-          <Source id="green-areas" type="geojson" data={visibleGreenAreas}>
-            <Layer {...greenAreasFillLayer} />
-            <Layer {...greenAreasOutlineLayer} />
+        {greenAreas && (
+          <Source id="green-areas" type="geojson" data={greenAreas}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(greenAreasFillLayer as any)} filter={parkFilter} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(greenAreasOutlineLayer as any)} filter={parkFilter} />
           </Source>
         )}
 
@@ -212,36 +195,42 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 3. Wege */}
-        {visiblePaths && (
-          <Source id="paths" type="geojson" data={visiblePaths}>
-            <Layer {...pathsAreaFillLayer} />
-            <Layer {...pathsLineLayer} />
+        {/* 3. Wege — Filter mit vorhandenem Geometrie-Filter kombinieren */}
+        {paths && (
+          <Source id="paths" type="geojson" data={paths}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(pathsAreaFillLayer as any)} filter={parkOnly
+              ? ['all', ['==', ['geometry-type'], 'Polygon'], ['==', ['get', 'in-park'], 1]] as FilterSpecification
+              : (pathsAreaFillLayer as any).filter} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(pathsLineLayer as any)} filter={parkOnly
+              ? ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get', 'in-park'], 1]] as FilterSpecification
+              : (pathsLineLayer as any).filter} />
           </Source>
         )}
 
-        {/* 4. Plätze */}
-        {!parkOnly && squares && (
+        {/* 4. Plätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
+        {squares && (
           <Source id="squares" type="geojson" data={squares}>
-            <Layer {...squaresFillLayer} />
-            <Layer {...squaresOutlineLayer} />
+            <Layer {...squaresFillLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            <Layer {...squaresOutlineLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
-        {/* 5. Spielplätze */}
-        {!parkOnly && playgrounds && (
+        {/* 5. Spielplätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
+        {playgrounds && (
           <Source id="playgrounds" type="geojson" data={playgrounds}>
-            <Layer {...playgroundsFillLayer} />
-            <Layer {...playgroundsOutlineLayer} />
-            <Layer {...playgroundPolygonTableTennisLayer} />
+            <Layer {...playgroundsFillLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            <Layer {...playgroundsOutlineLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            <Layer {...playgroundPolygonTableTennisLayer} layout={{ ...playgroundPolygonTableTennisLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
-        {/* 6. Spielgeräte */}
-        {!parkOnly && playgroundEquipment && (
+        {/* 6. Spielgeräte — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
+        {playgroundEquipment && (
           <Source id="playground-equipment" type="geojson" data={playgroundEquipment}>
-            <Layer {...playgroundTableTennisLayer} />
-            <Layer {...playgroundEquipmentLayer} />
+            <Layer {...playgroundTableTennisLayer} layout={{ ...playgroundTableTennisLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
+            <Layer {...playgroundEquipmentLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
@@ -253,9 +242,10 @@ export default function GrunkartMap() {
         )} */}
 
         {/* 8. Bäume (ab Zoom 14) */}
-        {visibleTrees && (
-          <Source id="trees" type="geojson" data={visibleTrees}>
-            <Layer {...treesIndividualLayer} />
+        {trees && (
+          <Source id="trees" type="geojson" data={trees}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(treesIndividualLayer as any)} filter={parkFilter} />
           </Source>
         )}
 
@@ -267,19 +257,19 @@ export default function GrunkartMap() {
         )}
 
         {/* 10. Labels — immer ganz oben (eigene Sources für korrekte Renderreihenfolge) */}
-        {visibleGreenAreas && (
-          <Source id="park-labels-src" type="geojson" data={visibleGreenAreas}>
+        {greenAreas && (
+          <Source id="park-labels-src" type="geojson" data={greenAreas}>
             <Layer {...parkLabelsLayer} />
           </Source>
         )}
-        {!parkOnly && squares && (
+        {squares && (
           <Source id="square-labels-src" type="geojson" data={squares}>
-            <Layer {...squareLabelsLayer} />
+            <Layer {...squareLabelsLayer} layout={{ ...squareLabelsLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
-        {!parkOnly && playgrounds && (
+        {playgrounds && (
           <Source id="playground-labels-src" type="geojson" data={playgrounds}>
-            <Layer {...playgroundLabelsLayer} />
+            <Layer {...playgroundLabelsLayer} layout={{ ...playgroundLabelsLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
         {water && (
@@ -370,13 +360,13 @@ type LegendProps = {
 function Legend({ parkOnly }: LegendProps) {
   const items = parkOnly
     ? [
-      { color: '#c8eaad', label: 'Parks (leisure=park)' },
+      { color: '#c8eaad', label: 'Parks' },
       { color: '#7ec8f5', label: 'Wasser' },
       { color: '#98c468', label: 'Wege im Park' },
       { color: '#3a8228', label: 'Bäume im Park' },
     ]
     : [
-      { color: '#c8eaad', label: 'Parks & Gärten' },
+      { color: '#c8eaad', label: 'Parks' },
       { color: '#7ec453', label: 'Wiesen & Grünflächen' },
       { color: '#4a8830', label: 'Wald' },
       { color: '#6aaa40', label: 'Gebüsch & Heide' },
