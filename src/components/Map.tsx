@@ -20,6 +20,7 @@ import {
   squaresFillLayer,
   squaresOutlineLayer,
   squareLabelsLayer,
+  sandFillLayer,
   playgroundsFillLayer,
   playgroundsOutlineLayer,
   playgroundPolygonTableTennisLayer,
@@ -97,6 +98,7 @@ export default function GrunkartMap() {
   const [trees, setTrees] = useState<FeatureCollection | null>(null);
   const [paths, setPaths] = useState<FeatureCollection | null>(null);
   const [benches, setBenches] = useState<FeatureCollection | null>(null);
+  const [sand, setSand] = useState<FeatureCollection | null>(null);
   const [playgrounds, setPlaygrounds] = useState<FeatureCollection | null>(null);
   const [playgroundEquipment, setPlaygroundEquipment] = useState<FeatureCollection | null>(null);
   const [squares, setSquares] = useState<FeatureCollection | null>(null);
@@ -113,6 +115,7 @@ export default function GrunkartMap() {
       { path: `${basePath}/data/baumkataster.geojson`, key: 'trees' },
       { path: `${basePath}/data/paths.geojson`, key: 'paths' },
       { path: `${basePath}/data/benches.geojson`, key: 'benches' },
+      { path: `${basePath}/data/sand.geojson`, key: 'sand' },
       { path: `${basePath}/data/playgrounds.geojson`, key: 'playgrounds' },
       { path: `${basePath}/data/playground-equipment.geojson`, key: 'playgroundEquipment' },
       { path: `${basePath}/data/squares.geojson`, key: 'squares' },
@@ -133,6 +136,7 @@ export default function GrunkartMap() {
       if (data.trees) setTrees(data.trees);
       if (data.paths) setPaths(data.paths);
       if (data.benches) setBenches(data.benches);
+      if (data.sand) setSand(data.sand);
       if (data.playgrounds) setPlaygrounds(data.playgrounds);
       if (data.playgroundEquipment) setPlaygroundEquipment(data.playgroundEquipment);
       if (data.squares) setSquares(data.squares);
@@ -219,7 +223,15 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 5. Spielplätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
+        {/* 5. Sand (natural=sand, playground=sandpit) */}
+        {sand && (
+          <Source id="sand" type="geojson" data={sand}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(sandFillLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+          </Source>
+        )}
+
+        {/* 6. Spielplätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
         {playgrounds && (
           <Source id="playgrounds" type="geojson" data={playgrounds}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -231,7 +243,7 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 6. Spielgeräte — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
+        {/* 7. Spielgeräte — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
         {playgroundEquipment && (
           <Source id="playground-equipment" type="geojson" data={playgroundEquipment}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -241,14 +253,14 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 7. Sitzbänke — ausgeblendet */}
+        {/* 8. Sitzbänke — ausgeblendet */}
         {/* {benches && (
           <Source id="benches" type="geojson" data={benches}>
             <Layer {...benchesLayer} />
           </Source>
         )} */}
 
-        {/* 8. Bäume (ab Zoom 14) */}
+        {/* 9. Bäume (ab Zoom 14) */}
         {trees && (
           <Source id="trees" type="geojson" data={trees}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -256,14 +268,14 @@ export default function GrunkartMap() {
           </Source>
         )}
 
-        {/* 9. Außenmaske */}
+        {/* 10. Außenmaske */}
         {outsideMask && (
           <Source id="outside-mask" type="geojson" data={outsideMask}>
             <Layer {...outsideMaskLayer} />
           </Source>
         )}
 
-        {/* 10. Labels — immer ganz oben (eigene Sources für korrekte Renderreihenfolge) */}
+        {/* 11. Labels — immer ganz oben (eigene Sources für korrekte Renderreihenfolge) */}
         {greenAreas && (
           <Source id="park-labels-src" type="geojson" data={greenAreas}>
             <Layer {...parkLabelsLayer} />

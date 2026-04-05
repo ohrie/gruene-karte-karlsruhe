@@ -24,6 +24,7 @@ export const COLORS = {
   treeIndividual: '#7aaa3a', // olivgrün – dezenter, leicht gelblich
   treeCluster: '#5a8a28',
   outsideMask: 'rgba(20, 20, 20, 0.55)',
+  sand: '#e8d5a3',
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -310,6 +311,19 @@ export const playgroundLabelsLayer: LayerProps = {
     'text-color': '#c07830',
     'text-halo-color': 'rgba(255, 240, 210, 0.9)',
     'text-halo-width': 1.5,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Sand
+// ---------------------------------------------------------------------------
+
+export const sandFillLayer: LayerProps = {
+  id: 'sand-fill',
+  type: 'fill',
+  paint: {
+    'fill-color': COLORS.sand,
+    'fill-opacity': 0.75,
   },
 };
 

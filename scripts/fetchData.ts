@@ -191,6 +191,20 @@ out body;
 out skel qt;
 `;
 
+const SAND_QUERY = `
+[out:json][timeout:60];
+area(${AREA_ID})->.searchArea;
+(
+  way["natural"="sand"](area.searchArea);
+  relation["natural"="sand"](area.searchArea);
+  way["playground"="sandpit"](area.searchArea);
+  relation["playground"="sandpit"](area.searchArea);
+);
+out body;
+>;
+out skel qt;
+`;
+
 const SQUARES_QUERY = `
 [out:json][timeout:60];
 area(${AREA_ID})->.searchArea;
@@ -245,6 +259,11 @@ async function main() {
       name: 'Spielgeräte',
       filename: 'playground-equipment.geojson',
       query: PLAYGROUND_EQUIPMENT_QUERY,
+    },
+    {
+      name: 'Sand',
+      filename: 'sand.geojson',
+      query: SAND_QUERY,
     },
     {
       name: 'Plätze',
