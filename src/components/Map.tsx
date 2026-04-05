@@ -214,16 +214,17 @@ export default function GrunkartMap() {
   const [parkOnly, setParkOnly] = useState(false);
 
   useEffect(() => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
     const files = [
-      { path: '/data/boundary.geojson', key: 'boundary' },
-      { path: '/data/green-areas.geojson', key: 'greenAreas' },
-      { path: '/data/water.geojson', key: 'water' },
-      { path: '/data/baumkataster.geojson', key: 'trees' },
-      { path: '/data/paths.geojson', key: 'paths' },
-      { path: '/data/benches.geojson', key: 'benches' },
-      { path: '/data/playgrounds.geojson', key: 'playgrounds' },
-      { path: '/data/playground-equipment.geojson', key: 'playgroundEquipment' },
-      { path: '/data/squares.geojson', key: 'squares' },
+      { path: `${basePath}/data/boundary.geojson`, key: 'boundary' },
+      { path: `${basePath}/data/green-areas.geojson`, key: 'greenAreas' },
+      { path: `${basePath}/data/water.geojson`, key: 'water' },
+      { path: `${basePath}/data/baumkataster.geojson`, key: 'trees' },
+      { path: `${basePath}/data/paths.geojson`, key: 'paths' },
+      { path: `${basePath}/data/benches.geojson`, key: 'benches' },
+      { path: `${basePath}/data/playgrounds.geojson`, key: 'playgrounds' },
+      { path: `${basePath}/data/playground-equipment.geojson`, key: 'playgroundEquipment' },
+      { path: `${basePath}/data/squares.geojson`, key: 'squares' },
     ];
 
     Promise.allSettled(files.map((f) => fetchGeoJSON(f.path))).then((results) => {
