@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Map, Source, Layer } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { FeatureCollection, Feature, Polygon, MultiPolygon, Position } from 'geojson';
+import { registerTableTennisIcon } from '@/lib/tableTennisIcon';
 
 import {
   greenAreasFillLayer,
@@ -20,8 +21,10 @@ import {
   squareLabelsLayer,
   playgroundsFillLayer,
   playgroundsOutlineLayer,
+  playgroundPolygonTableTennisLayer,
   playgroundLabelsLayer,
   playgroundEquipmentLayer,
+  playgroundTableTennisLayer,
   treesIndividualLayer,
   outsideMaskLayer,
 } from '@/lib/layerConfig';
@@ -308,6 +311,9 @@ export default function GrunkartMap() {
         mapStyle="https://tiles.openfreemap.org/styles/positron"
         hash={true}
         onError={handleMapError}
+        onLoad={(evt) => {
+          registerTableTennisIcon(evt.target);
+        }}
         attributionControl={{
           customAttribution:
             'Bäume: <a href="https://transparenz.karlsruhe.de/dataset/fachplane-baumkataster" target="_blank" rel="noopener">Fachpläne – Baumkataster</a>, Stadt Karlsruhe – <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>',
@@ -350,12 +356,14 @@ export default function GrunkartMap() {
           <Source id="playgrounds" type="geojson" data={playgrounds}>
             <Layer {...playgroundsFillLayer} />
             <Layer {...playgroundsOutlineLayer} />
+            <Layer {...playgroundPolygonTableTennisLayer} />
           </Source>
         )}
 
         {/* 6. Spielgeräte */}
         {!parkOnly && playgroundEquipment && (
           <Source id="playground-equipment" type="geojson" data={playgroundEquipment}>
+            <Layer {...playgroundTableTennisLayer} />
             <Layer {...playgroundEquipmentLayer} />
           </Source>
         )}

@@ -54,7 +54,7 @@ function filterPrivateAccess(fc: ReturnType<typeof roundGeometry>): ReturnType<t
   fc.features = fc.features.filter((f) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const access = (f as any).properties?.access;
-    return access !== 'private' && access !== 'no' && access !== 'customers';
+    return access !== 'private' && access !== 'no' && access !== 'customers' && access !== 'permissive';
   });
   const removed = before - fc.features.length;
   if (removed > 0) console.log(`  ✂  ${removed} Features mit access=private/no/customers entfernt`);
@@ -181,8 +181,14 @@ out skel qt;
 const PLAYGROUND_EQUIPMENT_QUERY = `
 [out:json][timeout:60];
 area(${AREA_ID})->.searchArea;
-node["playground"](area.searchArea);
+(
+  node["playground"](area.searchArea);
+  node["leisure"="pitch"]["sport"="table_tennis"](area.searchArea);
+  way["leisure"="pitch"]["sport"="table_tennis"](area.searchArea);
+);
 out body;
+>;
+out skel qt;
 `;
 
 const SQUARES_QUERY = `

@@ -321,6 +321,14 @@ export const playgroundEquipmentLayer: LayerProps = {
   id: 'playground-equipment',
   type: 'circle',
   minzoom: 17,
+  filter: [
+    '!',
+    [
+      'all',
+      ['==', ['get', 'leisure'], 'pitch'],
+      ['==', ['get', 'sport'], 'table_tennis'],
+    ],
+  ],
   paint: {
     'circle-color': [
       'case',
@@ -351,6 +359,50 @@ export const playgroundEquipmentLayer: LayerProps = {
     'circle-stroke-color': '#fff',
     'circle-stroke-width': 1,
     'circle-opacity': 0.9,
+  },
+};
+
+export const playgroundTableTennisLayer: LayerProps = {
+  id: 'playground-equipment-table-tennis',
+  type: 'symbol',
+  minzoom: 16,
+  filter: [
+    'all',
+    ['==', ['get', 'leisure'], 'pitch'],
+    ['==', ['get', 'sport'], 'table_tennis'],
+  ],
+  layout: {
+    'icon-image': 'table-tennis-icon',
+    'icon-size': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      16, 0.4,
+      19, 0.62,
+    ],
+    'icon-allow-overlap': true,
+  },
+};
+
+export const playgroundPolygonTableTennisLayer: LayerProps = {
+  id: 'playgrounds-table-tennis',
+  type: 'symbol',
+  minzoom: 16,
+  filter: [
+    'all',
+    ['==', ['get', 'leisure'], 'playground'],
+    ['==', ['get', 'sport'], 'table_tennis'],
+  ],
+  layout: {
+    'icon-image': 'table-tennis-icon',
+    'icon-size': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      16, 0.4,
+      19, 0.62,
+    ],
+    'icon-allow-overlap': true,
   },
 };
 
