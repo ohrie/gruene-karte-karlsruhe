@@ -256,4 +256,32 @@ pathsGeoJSON.features = filteredFeatures;
 fs.writeFileSync(pathsPath, JSON.stringify(pathsGeoJSON), 'utf-8');
 console.log('  paths.geojson gespeichert');
 
+// ---------------------------------------------------------------------------
+// 3. Grünflächen mit in-park markieren
+// ---------------------------------------------------------------------------
+
+console.log('\nVerarbeite green-areas.geojson (in-park markieren)…');
+
+let greenAreasInPark = 0;
+let greenAreasOutOfPark = 0;
+
+for (const feature of greenAreasGeoJSON.features) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const f = feature as any;
+  if (!f.properties || typeof f.properties !== 'object') f.properties = {};
+  if (isParkFeature(f)) {
+    f.properties['in-park'] = 1;
+    greenAreasInPark++;
+    continue;
+  }
+  const vertices = collectVertices(f.geometry);
+  const inPark = vertices.some(([lng, lat]) => anyPolygonContainsPoint(parkPolygons, lng, lat)) ? 1 : 0;
+  f.properties['in-park'] = inPark;
+  if (inPark) greenAreasInPark++; else greenAreasOutOfPark++;
+}
+
+console.log(`  ${greenAreasInPark} Grünflächen-Features in Parks, ${greenAreasOutOfPark} außerhalb`);
+fs.writeFileSync(path.join(DATA_DIR, 'green-areas.geojson'), JSON.stringify(greenAreasGeoJSON), 'utf-8');
+console.log('  green-areas.geojson gespeichert');
+
 console.log('\nFertig.');
