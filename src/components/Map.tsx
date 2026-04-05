@@ -212,25 +212,32 @@ export default function GrunkartMap() {
         {/* 4. Plätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
         {squares && (
           <Source id="squares" type="geojson" data={squares}>
-            <Layer {...squaresFillLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
-            <Layer {...squaresOutlineLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(squaresFillLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(squaresOutlineLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
         {/* 5. Spielplätze — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
         {playgrounds && (
           <Source id="playgrounds" type="geojson" data={playgrounds}>
-            <Layer {...playgroundsFillLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
-            <Layer {...playgroundsOutlineLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
-            <Layer {...playgroundPolygonTableTennisLayer} layout={{ ...playgroundPolygonTableTennisLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundsFillLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundsOutlineLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundPolygonTableTennisLayer as any)} layout={{ ...(playgroundPolygonTableTennisLayer as any).layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
         {/* 6. Spielgeräte — immer gerendert, Sichtbarkeit per layout-Property gesteuert */}
         {playgroundEquipment && (
           <Source id="playground-equipment" type="geojson" data={playgroundEquipment}>
-            <Layer {...playgroundTableTennisLayer} layout={{ ...playgroundTableTennisLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
-            <Layer {...playgroundEquipmentLayer} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundTableTennisLayer as any)} layout={{ ...(playgroundTableTennisLayer as any).layout, visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundEquipmentLayer as any)} layout={{ visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
 
@@ -264,12 +271,14 @@ export default function GrunkartMap() {
         )}
         {squares && (
           <Source id="square-labels-src" type="geojson" data={squares}>
-            <Layer {...squareLabelsLayer} layout={{ ...squareLabelsLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(squareLabelsLayer as any)} layout={{ ...(squareLabelsLayer as any).layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
         {playgrounds && (
           <Source id="playground-labels-src" type="geojson" data={playgrounds}>
-            <Layer {...playgroundLabelsLayer} layout={{ ...playgroundLabelsLayer.layout, visibility: parkOnly ? 'none' : 'visible' }} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Layer {...(playgroundLabelsLayer as any)} layout={{ ...(playgroundLabelsLayer as any).layout, visibility: parkOnly ? 'none' : 'visible' }} />
           </Source>
         )}
         {water && (
