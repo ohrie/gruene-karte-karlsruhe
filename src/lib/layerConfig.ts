@@ -10,14 +10,14 @@ export const COLORS = {
   garden: '#c8eaad',
   meadow: '#7ec453',         // mittleres Grün, dunkler als Park
   scrub: '#6aaa40',
-  wood: '#4a8830',
+  wood: '#6aaa40',
   grassland: '#80c255',
   water: '#7ec8f5',          // helles Blau
   waterLine: '#5ab8f0',
   bench: '#d4922e',
   playground: '#f0b870',
   playgroundEquipment: '#e09050',
-  square: '#c0aed8',         // gedämpftes Lavendel/Lila
+  square: '#c2b6d3',         // gedämpftes Lavendel/Lila
   path: '#98c468',           // abgestimmtes Grün – dunkler & gesättigter als Park
   pathArea: '#b2d88a',       // helles Grün – harmoniert mit Park/Wiese
   treeIndividual: '#7aaa3a', // olivgrün – dezenter, leicht gelblich
@@ -179,7 +179,7 @@ export const pathsLineLayer: LayerProps = {
         ['track'], 3,
         1.5,
       ],
-      18, [
+      17, [
         'match',
         ['get', 'highway'],
         ['pedestrian', 'footway', 'path'], 5,
@@ -187,6 +187,24 @@ export const pathsLineLayer: LayerProps = {
         ['steps'], 3,
         ['track'], 8,
         4,
+      ],
+      19, [
+        'match',
+        ['get', 'highway'],
+        ['pedestrian', 'footway', 'path'], 10,
+        ['cycleway', 'bridleway'], 12,
+        ['steps'], 6,
+        ['track'], 16,
+        8,
+      ],
+      22, [
+        'match',
+        ['get', 'highway'],
+        ['pedestrian', 'footway', 'path'], 20,
+        ['cycleway', 'bridleway'], 24,
+        ['steps'], 12,
+        ['track'], 30,
+        16,
       ],
     ],
     'line-opacity': 0.75,

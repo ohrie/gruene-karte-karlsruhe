@@ -16,6 +16,51 @@ import {
   processTreeDiameters,
 } from './utils.js';
 
+const TMP_DIR = path.join(OUTPUT_DIR, '../tmp');
+
+function tmpPartPath(filename: string, partIndex: number): string {
+  const base = path.basename(filename, '.geojson');
+  return path.join(TMP_DIR, `${base}_part${partIndex}.json`);
+}
+
+function loadTmpPart(filename: string, partIndex: number): ReturnType<typeof roundGeometry> | null {
+  const p = tmpPartPath(filename, partIndex);
+  if (!fs.existsSync(p)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function saveTmpPart(filename: string, partIndex: number, data: ReturnType<typeof roundGeometry>): void {
+  if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
+  fs.writeFileSync(tmpPartPath(filename, partIndex), JSON.stringify(data));
+}
+
+function cleanTmpParts(filename: string, count: number): void {
+  for (let i = 0; i < count; i++) {
+    const p = tmpPartPath(filename, i);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Access-Filter: entfernt nicht öffentliche Features
+// ---------------------------------------------------------------------------
+
+function filterPrivateAccess(fc: ReturnType<typeof roundGeometry>): ReturnType<typeof roundGeometry> {
+  const before = fc.features.length;
+  fc.features = fc.features.filter((f) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const access = (f as any).properties?.access;
+    return access !== 'private' && access !== 'no' && access !== 'customers';
+  });
+  const removed = before - fc.features.length;
+  if (removed > 0) console.log(`  ✂  ${removed} Features mit access=private/no/customers entfernt`);
+  return fc;
+}
+
 function fileExists(filename: string): boolean {
   return fs.existsSync(path.join(OUTPUT_DIR, filename));
 }
@@ -60,7 +105,7 @@ out skel qt;
 `;
 
 const GREEN_AREAS_GROUND_QUERY = `
-[out:json][timeout:90];
+[out:json][timeout:180];
 area(${AREA_ID})->.searchArea;
 (
   way["landuse"="meadow"](area.searchArea);
@@ -87,7 +132,6 @@ area(${AREA_ID})->.searchArea;
   relation["waterway"="riverbank"](area.searchArea);
   way["landuse"="basin"](area.searchArea);
   way["landuse"="reservoir"](area.searchArea);
-  way["leisure"="swimming_pool"](area.searchArea);
   way["waterway"~"^(river|stream|canal|ditch)$"](area.searchArea);
 );
 out body;
@@ -174,6 +218,7 @@ async function main() {
       name: 'Grünflächen',
       filename: 'green-areas.geojson',
       query: [GREEN_AREAS_PARKS_QUERY, GREEN_AREAS_FOREST_QUERY, GREEN_AREAS_GROUND_QUERY],
+      postProcess: filterPrivateAccess,
     },
     { name: 'Wasser', filename: 'water.geojson', query: WATER_QUERY },
     {
@@ -182,15 +227,25 @@ async function main() {
       query: TREES_QUERY,
       postProcess: processTreeDiameters,
     },
-    { name: 'Wege', filename: 'paths.geojson', query: PATHS_QUERY },
+    { name: 'Wege', filename: 'paths.geojson', query: PATHS_QUERY, postProcess: filterPrivateAccess },
     { name: 'Sitzbänke', filename: 'benches.geojson', query: BENCHES_QUERY },
-    { name: 'Spielplätze', filename: 'playgrounds.geojson', query: PLAYGROUNDS_QUERY },
+    {
+      name: 'Spielplätze',
+      filename: 'playgrounds.geojson',
+      query: PLAYGROUNDS_QUERY,
+      postProcess: filterPrivateAccess,
+    },
     {
       name: 'Spielgeräte',
       filename: 'playground-equipment.geojson',
       query: PLAYGROUND_EQUIPMENT_QUERY,
     },
-    { name: 'Plätze', filename: 'squares.geojson', query: SQUARES_QUERY },
+    {
+      name: 'Plätze',
+      filename: 'squares.geojson',
+      query: SQUARES_QUERY,
+      postProcess: filterPrivateAccess,
+    },
   ];
 
   const missing = queries.filter(({ filename }) => !fileExists(filename));
@@ -212,9 +267,17 @@ async function main() {
       const results = await Promise.resolve().then(async () => {
         const collected = [];
         for (let p = 0; p < parts.length; p++) {
-          if (p > 0) await delay(3000);
           console.log(`  → Teil ${p + 1}/${parts.length}...`);
-          collected.push(await runOverpassQuery(parts[p]));
+          const cached = loadTmpPart(filename, p);
+          if (cached) {
+            console.log(`    ♻  Aus Cache geladen`);
+            collected.push(cached);
+            continue;
+          }
+          if (p > 0) await delay(3000);
+          const result = await runOverpassQuery(parts[p]);
+          saveTmpPart(filename, p, result);
+          collected.push(result);
         }
         return collected;
       });
@@ -224,6 +287,7 @@ async function main() {
       geojson = roundGeometry(geojson);
       if (postProcess) geojson = postProcess(geojson);
       saveGeoJSON(filename, geojson);
+      cleanTmpParts(filename, parts.length);
     } catch (err) {
       console.error(`  ✗ Fehler bei "${name}":`, err);
     }

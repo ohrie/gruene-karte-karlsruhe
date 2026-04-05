@@ -154,16 +154,19 @@ const DATA_DIR = path.join(process.cwd(), 'public', 'data');
 
 console.log('Lade green-areas.geojson…');
 const greenAreasGeoJSON = readGeoJSON(path.join(DATA_DIR, 'green-areas.geojson'));
-
 console.log(`  ${greenAreasGeoJSON.features.length} Grünflächen-Features geladen`);
 
-// Alle Grünflächen-Polygone vorbereiten
+console.log('Lade playgrounds.geojson…');
+const playgroundsGeoJSON = readGeoJSON(path.join(DATA_DIR, 'playgrounds.geojson'));
+console.log(`  ${playgroundsGeoJSON.features.length} Spielplatz-Features geladen`);
+
+// Alle Grünflächen- und Spielplatz-Polygone vorbereiten
 const greenPolygons: PolygonEntry[] = [];
-for (const feature of greenAreasGeoJSON.features) {
+for (const feature of [...greenAreasGeoJSON.features, ...playgroundsGeoJSON.features]) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   greenPolygons.push(...extractPolygonEntries(feature as any));
 }
-console.log(`  ${greenPolygons.length} Polygone/Teilflächen extrahiert`);
+console.log(`  ${greenPolygons.length} Polygone/Teilflächen extrahiert (inkl. Spielplätze)`);
 
 // ---------------------------------------------------------------------------
 // 1. Baumkataster verarbeiten
