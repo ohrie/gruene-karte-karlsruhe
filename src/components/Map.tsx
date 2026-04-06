@@ -108,46 +108,36 @@ export default function GrunkartMap() {
 
   useEffect(() => {
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-    const files = [
-      { path: `${basePath}/data/boundary.geojson`, key: 'boundary' },
-      { path: `${basePath}/data/green-areas.geojson`, key: 'greenAreas' },
-      { path: `${basePath}/data/water.geojson`, key: 'water' },
-      { path: `${basePath}/data/baumkataster.geojson`, key: 'trees' },
-      { path: `${basePath}/data/paths.geojson`, key: 'paths' },
-      { path: `${basePath}/data/benches.geojson`, key: 'benches' },
-      { path: `${basePath}/data/sand.geojson`, key: 'sand' },
-      { path: `${basePath}/data/playgrounds.geojson`, key: 'playgrounds' },
-      { path: `${basePath}/data/playground-equipment.geojson`, key: 'playgroundEquipment' },
-      { path: `${basePath}/data/squares.geojson`, key: 'squares' },
-    ];
+    let pending = 0;
 
-    Promise.allSettled(files.map((f) => fetchGeoJSON(f.path))).then((results) => {
-      const data: Record<string, FeatureCollection> = {};
-      results.forEach((result, i) => {
-        if (result.status === 'fulfilled') {
-          data[files[i].key] = result.value;
-        } else {
-          console.warn(`Konnte ${files[i].path} nicht laden:`, result.reason);
-        }
-      });
+    function load(path: string, onSuccess: (data: FeatureCollection) => void) {
+      pending++;
+      fetchGeoJSON(path)
+        .then((data) => {
+          onSuccess(data);
+        })
+        .catch((err) => console.warn(`Konnte ${path} nicht laden:`, err))
+        .finally(() => {
+          pending--;
+          if (pending === 0) setDataLoaded(true);
+        });
+    }
 
-      if (data.greenAreas) setGreenAreas(data.greenAreas);
-      if (data.water) setWater(data.water);
-      if (data.trees) setTrees(data.trees);
-      if (data.paths) setPaths(data.paths);
-      if (data.benches) setBenches(data.benches);
-      if (data.sand) setSand(data.sand);
-      if (data.playgrounds) setPlaygrounds(data.playgrounds);
-      if (data.playgroundEquipment) setPlaygroundEquipment(data.playgroundEquipment);
-      if (data.squares) setSquares(data.squares);
-
-      if (data.boundary?.features?.[0]) {
-        const maskFeature = buildOutsideMask(data.boundary.features[0]);
+    load(`${basePath}/data/boundary.geojson`, (data) => {
+      if (data.features?.[0]) {
+        const maskFeature = buildOutsideMask(data.features[0]);
         setOutsideMask({ type: 'FeatureCollection', features: [maskFeature] });
       }
-
-      setDataLoaded(true);
     });
+    load(`${basePath}/data/green-areas.geojson`, setGreenAreas);
+    load(`${basePath}/data/water.geojson`, setWater);
+    load(`${basePath}/data/paths.geojson`, setPaths);
+    load(`${basePath}/data/squares.geojson`, setSquares);
+    load(`${basePath}/data/sand.geojson`, setSand);
+    load(`${basePath}/data/playgrounds.geojson`, setPlaygrounds);
+    load(`${basePath}/data/playground-equipment.geojson`, setPlaygroundEquipment);
+    load(`${basePath}/data/benches.geojson`, setBenches);
+    load(`${basePath}/data/baumkataster.geojson`, setTrees);
   }, []);
 
   const handleMapError = useCallback((e: { error: Error }) => {
