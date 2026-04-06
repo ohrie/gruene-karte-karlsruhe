@@ -54,3 +54,9 @@ npm run process-green-features
 ```
 
 Anschließend die App normal starten (`npm run dev`).
+
+## Lizenz
+
+Dieses Projekt steht unter der **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+Siehe die vollständigen Lizenzbedingungen in der Datei [`LICENSE`](./LICENSE).
