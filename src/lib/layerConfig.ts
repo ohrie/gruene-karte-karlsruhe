@@ -117,7 +117,7 @@ export const waterFillLayer: LayerProps = {
   filter: ['==', ['geometry-type'], 'Polygon'],
   paint: {
     'fill-color': COLORS.water,
-    'fill-opacity': 0.8,
+    'fill-opacity': 1,
   },
 };
 
@@ -126,7 +126,7 @@ export const waterLineLayer: LayerProps = {
   type: 'line',
   filter: ['==', ['geometry-type'], 'LineString'],
   paint: {
-    'line-color': COLORS.waterLine,
+    'line-color': COLORS.water,
     'line-width': [
       'interpolate',
       ['linear'],
@@ -135,7 +135,7 @@ export const waterLineLayer: LayerProps = {
       14, 3,
       18, 8,
     ],
-    'line-opacity': 0.85,
+    'line-opacity': 1,
   },
 };
 
@@ -149,8 +149,8 @@ export const pathsAreaFillLayer: LayerProps = {
   minzoom: 14,
   filter: ['==', ['geometry-type'], 'Polygon'],
   paint: {
-    'fill-color': COLORS.pathArea,
-    'fill-opacity': 0.7,
+    'fill-color': COLORS.path,
+    'fill-opacity': 1,
   },
 };
 
@@ -211,7 +211,7 @@ export const pathsLineLayer: LayerProps = {
         16,
       ],
     ],
-    'line-opacity': 0.75,
+    'line-opacity': 1,
   },
 };
 
