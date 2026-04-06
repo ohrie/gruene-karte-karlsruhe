@@ -352,25 +352,83 @@ type ParkModeSwitcherProps = {
 
 function ParkModeSwitcher({ parkOnly, onChange }: ParkModeSwitcherProps) {
   return (
-    <button
-      type="button"
-      aria-pressed={parkOnly}
-      onClick={() => onChange(!parkOnly)}
+    <div
       style={{
-        border: '1px solid rgba(62, 108, 49, 0.35)',
-        borderRadius: 10,
         background: 'rgba(255,255,255,0.95)',
+        borderRadius: 999,
         boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-        color: '#22481d',
-        fontSize: 12,
-        fontWeight: 700,
-        padding: '8px 12px',
+        border: '1px solid rgba(62, 108, 49, 0.3)',
+        padding: 3,
+        display: 'inline-flex',
+        position: 'relative',
         cursor: 'pointer',
-        textAlign: 'left',
+        userSelect: 'none',
       }}
+      role="group"
+      aria-label="Ansicht wählen"
     >
-      {parkOnly ? 'Modus: Nur Parks' : 'Modus: Alle Grünflächen'}
-    </button>
+      {/* Sliding pill */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 3,
+          bottom: 3,
+          left: parkOnly ? 3 : 'calc(50% + 1px)',
+          width: 'calc(50% - 4px)',
+          borderRadius: 999,
+          background: parkOnly
+            ? 'linear-gradient(135deg, #3a8228 0%, #5aaa40 100%)'
+            : 'linear-gradient(135deg, #22481d 0%, #3a8228 100%)',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+          transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1), background 0.22s ease',
+          pointerEvents: 'none',
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => onChange(true)}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          border: 'none',
+          background: 'transparent',
+          borderRadius: 999,
+          padding: '6px 16px',
+          fontSize: 12,
+          fontWeight: 700,
+          color: parkOnly ? '#fff' : '#5a7a52',
+          cursor: 'pointer',
+          transition: 'color 0.22s ease',
+          minWidth: 60,
+          textAlign: 'center',
+        }}
+        aria-pressed={parkOnly}
+      >
+        Parks
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(false)}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          border: 'none',
+          background: 'transparent',
+          borderRadius: 999,
+          padding: '6px 16px',
+          fontSize: 12,
+          fontWeight: 700,
+          color: !parkOnly ? '#fff' : '#5a7a52',
+          cursor: 'pointer',
+          transition: 'color 0.22s ease',
+          minWidth: 60,
+          textAlign: 'center',
+        }}
+        aria-pressed={!parkOnly}
+      >
+        Alles
+      </button>
+    </div>
   );
 }
 
@@ -438,11 +496,11 @@ function Legend({ parkOnly }: LegendProps) {
         </span>
         {collapsed ? (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2.5 5L7 9.5L11.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.5 9L7 4.5L11.5 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2.5 9L7 4.5L11.5 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </button>
