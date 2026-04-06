@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Map, Source, Layer } from '@vis.gl/react-maplibre';
+import { Map, Source, Layer, NavigationControl, GeolocateControl } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { FilterSpecification } from 'maplibre-gl';
 import type { FeatureCollection, Feature, Polygon, MultiPolygon, Position } from 'geojson';
@@ -181,6 +181,13 @@ export default function GrunkartMap() {
             'Bäume: <a href="https://transparenz.karlsruhe.de/dataset/fachplane-baumkataster" target="_blank" rel="noopener">Fachpläne – Baumkataster</a>, Stadt Karlsruhe – <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>',
         }}
       >
+        <NavigationControl position="top-right" visualizePitch={true} />
+        <GeolocateControl
+          position="top-right"
+          trackUserLocation={true}
+          showUserHeading={true}
+          showAccuracyCircle={true}
+        />
         {/* 1. Grünflächen (unterste Ebene) */}
         {greenAreas && (
           <Source id="green-areas" type="geojson" data={greenAreas}>
@@ -306,19 +313,25 @@ export default function GrunkartMap() {
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            top: 16,
             left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(255,255,255,0.9)',
-            padding: '12px 24px',
-            borderRadius: 8,
-            fontSize: 14,
+            transform: 'translateX(-50%)',
+            background: 'rgba(255,255,255,0.92)',
+            padding: '8px 18px',
+            borderRadius: 999,
+            fontSize: 13,
             color: '#2d5a27',
             fontWeight: 500,
             pointerEvents: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 9,
+            whiteSpace: 'nowrap',
           }}
         >
-          🌿 Karte wird geladen...
+          <span className="map-spinner" />
+          🌿 Karte wird geladen…
         </div>
       )}
 

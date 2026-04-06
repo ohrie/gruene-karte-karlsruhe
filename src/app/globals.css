@@ -10,7 +10,21 @@ body {
   padding: 0;
   height: 100%;
   font-family: system-ui, -apple-system, sans-serif;
-  background: #1a1a1a;
+  background: #ffffff;
+}
+
+@keyframes map-spin {
+  to { transform: rotate(360deg); }
+}
+
+.map-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(45, 90, 39, 0.25);
+  border-top-color: #2d5a27;
+  border-radius: 50%;
+  animation: map-spin 0.75s linear infinite;
+  flex-shrink: 0;
 }
 
 #__next,
