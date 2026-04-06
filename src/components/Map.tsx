@@ -175,7 +175,6 @@ export default function GrunkartMap() {
         <GeolocateControl
           position="top-right"
           trackUserLocation={true}
-          showUserHeading={true}
           showAccuracyCircle={true}
         />
         {/* 1. Grünflächen (unterste Ebene) */}
