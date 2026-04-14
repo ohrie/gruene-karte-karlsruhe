@@ -1,9 +1,10 @@
 /**
  * Verarbeitet baumkataster.geojson und paths.geojson gegen green-areas.geojson:
  *
- * Bäume: Setzt insideGreenArea: 1 | 0 und in-park: 1 | 0 pro Feature
- * Wege:  Entfernt alle Features, bei denen kein Vertex in einer Grünfläche liegt,
- *        und setzt in-park: 1 | 0 auf den verbleibenden Features
+ * Bäume:       Setzt insideGreenArea: 1 | 0 und in-park: 1 | 0 pro Feature
+ * Wege:        Entfernt alle Features, bei denen kein Vertex in einer Grünfläche liegt,
+ *              und setzt in-park: 1 | 0 auf den verbleibenden Features
+ * Grünflächen: Berechnet area_m2 (Fläche in m²) und polsby_popper (Formkompaktheit)
  *
  * Ausführung: npm run process-green-features
  */
@@ -83,6 +84,70 @@ function polygonContainsPoint(rings: Ring[], lng: number, lat: number): boolean 
     if (ringContainsPoint(rings[i], lng, lat)) return false;
   }
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Fläche und Umfang (metrische Näherung für WGS84-Koordinaten)
+// ---------------------------------------------------------------------------
+
+const METERS_PER_DEG_LAT = 111320;
+
+/** Fläche eines Rings in m² (Shoelace-Formel mit lokaler metrischer Näherung) */
+function ringAreaM2(ring: Ring): number {
+  const avgLat = ring.reduce((sum, [, lat]) => sum + lat, 0) / ring.length;
+  const mLng = METERS_PER_DEG_LAT * Math.cos(avgLat * Math.PI / 180);
+  let area = 0;
+  const n = ring.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    area += (ring[j][0] * mLng + ring[i][0] * mLng) * (ring[j][1] * METERS_PER_DEG_LAT - ring[i][1] * METERS_PER_DEG_LAT);
+  }
+  return Math.abs(area) / 2;
+}
+
+/** Umfang eines Rings in m */
+function ringPerimeterM(ring: Ring): number {
+  const avgLat = ring.reduce((sum, [, lat]) => sum + lat, 0) / ring.length;
+  const mLng = METERS_PER_DEG_LAT * Math.cos(avgLat * Math.PI / 180);
+  let perimeter = 0;
+  const n = ring.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const dx = (ring[i][0] - ring[j][0]) * mLng;
+    const dy = (ring[i][1] - ring[j][1]) * METERS_PER_DEG_LAT;
+    perimeter += Math.sqrt(dx * dx + dy * dy);
+  }
+  return perimeter;
+}
+
+/** Berechnet Gesamtfläche (m²) und Gesamtumfang (m) für Polygon- oder MultiPolygon-Geometrie */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function computeAreaAndPerimeter(geometry: any): { areaM2: number; perimeterM: number } {
+  let totalArea = 0;
+  let totalPerimeter = 0;
+
+  function processPolygon(rings: Ring[]): void {
+    totalArea += ringAreaM2(rings[0]);
+    totalPerimeter += ringPerimeterM(rings[0]);
+    for (let i = 1; i < rings.length; i++) {
+      totalArea -= ringAreaM2(rings[i]);
+      totalPerimeter += ringPerimeterM(rings[i]);
+    }
+  }
+
+  if (geometry?.type === 'Polygon') {
+    processPolygon(geometry.coordinates as Ring[]);
+  } else if (geometry?.type === 'MultiPolygon') {
+    for (const polygonCoords of geometry.coordinates as Ring[][]) {
+      processPolygon(polygonCoords);
+    }
+  }
+
+  return { areaM2: Math.max(0, totalArea), perimeterM: totalPerimeter };
+}
+
+/** Polsby-Popper-Score: PP = 4π·A / P²  (1 = Kreis, →0 = gestreckt/komplex) */
+function polsbyPopper(areaM2: number, perimeterM: number): number {
+  if (perimeterM === 0) return 0;
+  return (4 * Math.PI * areaM2) / (perimeterM * perimeterM);
 }
 
 /** Prüft ob mindestens ein PolygonEntry den Punkt enthält */
@@ -166,6 +231,10 @@ console.log('Lade playgrounds.geojson…');
 const playgroundsGeoJSON = readGeoJSON(path.join(DATA_DIR, 'playgrounds.geojson'));
 console.log(`  ${playgroundsGeoJSON.features.length} Spielplatz-Features geladen`);
 
+console.log('Lade squares.geojson…');
+const squaresGeoJSON = readGeoJSON(path.join(DATA_DIR, 'squares.geojson'));
+console.log(`  ${squaresGeoJSON.features.length} Platz-Features geladen`);
+
 // Alle Grünflächen- und Spielplatz-Polygone vorbereiten
 const greenPolygons: PolygonEntry[] = [];
 for (const feature of [...greenAreasGeoJSON.features, ...playgroundsGeoJSON.features]) {
@@ -181,7 +250,11 @@ for (const feature of greenAreasGeoJSON.features) {
   if (!isParkFeature(f)) continue;
   parkPolygons.push(...extractPolygonEntries(f));
 }
-console.log(`  ${parkPolygons.length} Park-Polygone/Teilflächen extrahiert`);
+for (const feature of squaresGeoJSON.features) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parkPolygons.push(...extractPolygonEntries(feature as any));
+}
+console.log(`  ${parkPolygons.length} Park-Polygone/Teilflächen extrahiert (inkl. Plätze)`);
 
 // ---------------------------------------------------------------------------
 // 1. Baumkataster verarbeiten
@@ -269,6 +342,10 @@ for (const feature of greenAreasGeoJSON.features) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const f = feature as any;
   if (!f.properties || typeof f.properties !== 'object') f.properties = {};
+  const { areaM2, perimeterM } = computeAreaAndPerimeter(f.geometry);
+  f.properties['area_m2'] = Math.round(areaM2);
+  f.properties['polsby_popper'] = Math.round(polsbyPopper(areaM2, perimeterM) * 1000) / 1000;
+
   if (isParkFeature(f)) {
     f.properties['in-park'] = 1;
     greenAreasInPark++;

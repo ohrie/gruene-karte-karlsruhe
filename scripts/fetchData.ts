@@ -151,7 +151,6 @@ const PATHS_QUERY = `
 area(${AREA_ID})->.searchArea;
 (
   way["area:highway"](area.searchArea);
-  way["highway"]["area"="yes"](area.searchArea);
   way["highway"~"^(footway|path|cycleway|pedestrian|steps|bridleway|track)$"](area.searchArea);
 );
 out body;
