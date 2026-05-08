@@ -181,15 +181,15 @@ export default function GrunkartMap() {
   }, []);
 
   // Abgeleitete Sichtbarkeits-Flags
-  const showParkOnly    = mode === 'parks';
-  const showGreen       = mode === 'gruen' || mode === 'parks';
-  const showSquares     = mode === 'gruen' || mode === 'plaetze';
+  const showParkOnly = mode === 'parks';
+  const showGreen = mode === 'gruen' || mode === 'parks';
+  const showSquares = mode === 'gruen' || mode === 'plaetze';
   const showPlaygrounds = mode === 'gruen';
-  const showWater       = mode === 'gruen' || mode === 'parks';
-  const showTrees       = mode === 'gruen' || mode === 'parks';
-  const showPaths       = mode === 'gruen' || mode === 'parks';
-  const showSand        = mode === 'gruen';
-  const showRadRouten   = mode === 'radrouten';
+  const showWater = mode === 'gruen' || mode === 'parks';
+  const showTrees = mode === 'gruen' || mode === 'parks';
+  const showPaths = mode === 'gruen' || mode === 'parks';
+  const showSand = mode === 'gruen';
+  const showRadRouten = mode === 'radrouten';
   const showBeleuchtung = mode === 'beleuchtung';
 
   // MapLibre filter expression für Park-Only-Modus
@@ -382,7 +382,7 @@ export default function GrunkartMap() {
         <div
           style={{
             position: 'absolute',
-            top: 16,
+            top: 72,
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(255,255,255,0.92)',
@@ -407,6 +407,18 @@ export default function GrunkartMap() {
       <div
         style={{
           position: 'absolute',
+          top: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 2,
+        }}
+      >
+        <ModeSwitcher mode={mode} onChange={handleModeChange} />
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
           right: 12,
           bottom: 24,
           display: 'flex',
@@ -417,7 +429,6 @@ export default function GrunkartMap() {
         }}
       >
         <Legend mode={mode} />
-        <ModeSwitcher mode={mode} onChange={handleModeChange} />
       </div>
     </div>
   );
@@ -433,10 +444,10 @@ type ModeSwitcherProps = {
 };
 
 const MODE_CONFIG: Record<MapMode, { label: string; gradient: string; icon: string }> = {
-  parks:       { label: 'Parks',       gradient: 'linear-gradient(135deg, #3a8228 0%, #5aaa40 100%)', icon: '🌳' },
-  gruen:       { label: 'Grün',        gradient: 'linear-gradient(135deg, #22481d 0%, #3a8228 100%)', icon: '🌿' },
-  plaetze:     { label: 'Plätze',      gradient: 'linear-gradient(135deg, #5a4088 0%, #8060b8 100%)', icon: '🏛️' },
-  radrouten:   { label: 'Radrouten',   gradient: 'linear-gradient(135deg, #c03020 0%, #e84040 100%)', icon: '🚲' },
+  parks: { label: 'Parks', gradient: 'linear-gradient(135deg, #3a8228 0%, #5aaa40 100%)', icon: '🌳' },
+  gruen: { label: 'Grün', gradient: 'linear-gradient(135deg, #22481d 0%, #3a8228 100%)', icon: '🌿' },
+  plaetze: { label: 'Plätze', gradient: 'linear-gradient(135deg, #5a4088 0%, #8060b8 100%)', icon: '🏛️' },
+  radrouten: { label: 'Radrouten', gradient: 'linear-gradient(135deg, #c03020 0%, #e84040 100%)', icon: '🚲' },
   beleuchtung: { label: 'Beleuchtung', gradient: 'linear-gradient(135deg, #1a1a3a 0%, #c8920a 100%)', icon: '💡' },
 };
 
@@ -465,8 +476,9 @@ function ModeSwitcher({ mode, onChange }: ModeSwitcherProps) {
         <div
           style={{
             position: 'absolute',
-            bottom: 'calc(100% + 8px)',
-            right: 0,
+            top: 'calc(100% + 8px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
             background: 'rgba(255,255,255,0.97)',
             borderRadius: 14,
             boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
@@ -624,9 +636,9 @@ const LEGEND_ITEMS: Record<MapMode, LegendItem[]> = {
     { color: '#4a7fc1', label: 'Nebenradstrecke', type: 'line' },
   ],
   beleuchtung: [
-    { color: '#ffd166', label: 'Beleuchtet (lit=yes)',    type: 'line' },
+    { color: '#ffd166', label: 'Beleuchtet (lit=yes)', type: 'line' },
     { color: '#4a4a6a', label: 'Unbekannt / keine Daten', type: 'line' },
-    { color: '#1a1a2e', label: 'Unbeleuchtet (lit=no)',   type: 'line' },
+    { color: '#1a1a2e', label: 'Unbeleuchtet (lit=no)', type: 'line' },
   ],
 };
 
@@ -667,7 +679,7 @@ function Legend({ mode }: LegendProps) {
         }}
       >
         <span style={{ fontWeight: 700, fontSize: 13 }}>
-          Grüne Karte Karlsruhe
+          Legende
         </span>
         {collapsed ? (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
