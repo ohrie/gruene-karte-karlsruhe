@@ -1,29 +1,34 @@
 {
-  "name": "grunkarte-karlsruhe",
-  "version": "0.1.0",
+  "name": "gruene-karte-karlsruhe",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "fetch-data": "tsx scripts/fetchData.ts",
-    "process-green-features": "tsx scripts/processGreenAreaFeatures.ts"
+    "process-green-features": "tsx scripts/processGreenAreaFeatures.ts",
+    "process-radrouten": "tsx scripts/processRadrouten.ts",
+    "fetch-highways-lighting": "tsx scripts/fetchHighwaysLighting.ts",
+    "type-check": "tsc"
   },
   "dependencies": {
-    "next": "^16.2.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "maplibre-gl": "^5.22.0",
     "@vis.gl/react-maplibre": "^8.1.0",
-    "osmtogeojson": "^3.0.0-beta.5"
+    "maplibre-gl": "^5.22.0",
+    "next": "^16.2.2",
+    "osmtogeojson": "^3.0.0-beta.5",
+    "proj4": "^2.20.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
+    "@types/geojson": "^7946.0.14",
     "@types/node": "^22.0.0",
+    "@types/osmtogeojson": "^2.2.22-alpha",
+    "@types/proj4": "^2.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/osmtogeojson": "^2.2.22-alpha",
-    "@types/geojson": "^7946.0.14",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
   }
 }

@@ -12,7 +12,10 @@ export async function runOverpassQuery(query: string): Promise<FeatureCollection
   console.log('  → Sende Overpass-Query...');
   const res = await fetch(OVERPASS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'gruene-karte-karlsruhe/0.2 (https://github.com/ohrie/gruene-karte-karlsruhe)',
+    },
     body: `data=${encodeURIComponent(query)}`,
   });
   if (!res.ok) {

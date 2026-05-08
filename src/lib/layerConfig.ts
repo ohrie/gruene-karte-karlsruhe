@@ -25,6 +25,13 @@ export const COLORS = {
   treeCluster: '#5a8a28',
   outsideMask: 'rgba(20, 20, 20, 0.55)',
   sand: '#e8d5a3',
+  radHaupt:          '#2e9e4f',   // grün — Hauptradstrecke
+  radStrecke:        '#f5820a',   // orange — Radstrecke
+  radNeben:          '#4a7fc1',   // blau — Nebenradstrecke
+  radDefault:        '#aaaaaa',   // grau — Unbekannt/fallback
+  litYes:            '#ffd166',   // warmes Bernstein-Gelb — beleuchtet
+  litNo:             '#1a1a2e',   // fast schwarz — unbeleuchtet
+  litUnknown:        '#4a4a6a',   // Schiefergrau — unbekannt
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -589,6 +596,91 @@ export const waterAreaLabelsLayer: LayerProps = {
 };
 
 // ---------------------------------------------------------------------------
+// Radrouten
+// ---------------------------------------------------------------------------
+
+export const radRoutenLineLayer: LayerProps = {
+  id: 'rad-routen-line',
+  type: 'line',
+  filter: [
+    'any',
+    ['has', 'routenNr'],
+    ['==', ['get', 'verkehrsbedeutung'], 'Hauptradstrecke'],
+    ['==', ['get', 'verkehrsbedeutung'], 'Nebenradstrecke'],
+  ],
+  layout: {
+    'line-cap': 'round',
+    'line-join': 'round',
+  },
+  paint: {
+    'line-color': [
+      'match',
+      ['get', 'verkehrsbedeutung'],
+      'Hauptradstrecke',       COLORS.radHaupt,
+      'Radstrecke (Default)',  COLORS.radStrecke,
+      'Nebenradstrecke',       COLORS.radNeben,
+      COLORS.radDefault,
+    ],
+    'line-width': [
+      'interpolate', ['linear'], ['zoom'],
+      10, ['match', ['get', 'verkehrsbedeutung'],
+        'Hauptradstrecke', 2.5,
+        'Radstrecke (Default)', 1.8,
+        'Nebenradstrecke', 2.5,
+        0.8,
+      ],
+      14, ['match', ['get', 'verkehrsbedeutung'],
+        'Hauptradstrecke', 4.5,
+        'Radstrecke (Default)', 3.0,
+        'Nebenradstrecke', 4.5,
+        1.4,
+      ],
+      18, ['match', ['get', 'verkehrsbedeutung'],
+        'Hauptradstrecke', 8.0,
+        'Radstrecke (Default)', 5.5,
+        'Nebenradstrecke', 8.0,
+        2.5,
+      ],
+    ],
+    'line-opacity': 0.9,
+  },
+};
+
+export const radRoutenLabelLayer: LayerProps = {
+  id: 'rad-routen-label',
+  type: 'symbol',
+  minzoom: 12,
+  filter: ['has', 'routenNr'],
+  layout: {
+    'text-field': ['get', 'routenNr'],
+    'text-font': ['Noto Sans Bold'],
+    'text-size': [
+      'interpolate', ['linear'], ['zoom'],
+      12, 9,
+      15, 12,
+      18, 15,
+    ],
+    'symbol-placement': 'line',
+    'text-pitch-alignment': 'viewport',
+    'text-rotation-alignment': 'viewport',
+    'symbol-spacing': 300,
+    'text-keep-upright': true,
+  },
+  paint: {
+    'text-color': '#ffffff',
+    'text-halo-color': [
+      'match',
+      ['get', 'verkehrsbedeutung'],
+      'Hauptradstrecke',       COLORS.radHaupt,
+      'Radstrecke (Default)',  COLORS.radStrecke,
+      'Nebenradstrecke',       COLORS.radNeben,
+      COLORS.radDefault,
+    ],
+    'text-halo-width': 4,
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Außenmaske (Bereich außerhalb Karlsruhe)
 // ---------------------------------------------------------------------------
 
@@ -598,5 +690,117 @@ export const outsideMaskLayer: LayerProps = {
   paint: {
     'fill-color': '#101a10',
     'fill-opacity': 0.55,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Straßenbeleuchtung (Beleuchtungs-Modus)
+// ---------------------------------------------------------------------------
+
+export const highwaysUnknownLitLayer: LayerProps = {
+  id: 'highways-unknown-lit',
+  type: 'line',
+  filter: [
+    'all',
+    ['!=', ['get', 'lit'], 'yes'],
+    ['!=', ['get', 'lit'], 'no'],
+  ],
+  layout: {
+    'line-cap': 'round',
+    'line-join': 'round',
+  },
+  paint: {
+    'line-color': COLORS.litUnknown,
+    'line-width': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.5,
+      13, 0.9,
+      15, 1.6,
+      18, 3.0,
+    ],
+    'line-opacity': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.4,
+      14, 0.6,
+      18, 0.75,
+    ],
+  },
+};
+
+export const highwaysUnlitLayer: LayerProps = {
+  id: 'highways-unlit',
+  type: 'line',
+  filter: ['==', ['get', 'lit'], 'no'],
+  layout: {
+    'line-cap': 'round',
+    'line-join': 'round',
+  },
+  paint: {
+    'line-color': COLORS.litNo,
+    'line-width': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.6,
+      13, 1.0,
+      15, 1.8,
+      18, 3.5,
+    ],
+    'line-opacity': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.5,
+      14, 0.7,
+      18, 0.85,
+    ],
+  },
+};
+
+export const highwaysLitLayer: LayerProps = {
+  id: 'highways-lit',
+  type: 'line',
+  filter: ['==', ['get', 'lit'], 'yes'],
+  layout: {
+    'line-cap': 'round',
+    'line-join': 'round',
+  },
+  paint: {
+    'line-color': COLORS.litYes,
+    'line-width': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.8,
+      13, 1.4,
+      15, 2.5,
+      18, 5.0,
+    ],
+    'line-opacity': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.7,
+      14, 0.9,
+      18, 1.0,
+    ],
+    'line-blur': [
+      'interpolate', ['linear'], ['zoom'],
+      10, 0.5,
+      16, 0.0,
+    ],
+  },
+};
+
+export const highwaysLabelLayer: LayerProps = {
+  id: 'highways-label',
+  type: 'symbol',
+  minzoom: 14,
+  filter: ['has', 'name'],
+  layout: {
+    'text-field': ['get', 'name'],
+    'text-font': ['Noto Sans Regular'],
+    'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 17, 13],
+    'symbol-placement': 'line',
+    'text-pitch-alignment': 'viewport',
+    'text-max-angle': 30,
+    'text-padding': 10,
+  },
+  paint: {
+    'text-color': '#e8d5a3',
+    'text-halo-color': '#0a0a1a',
+    'text-halo-width': 1.5,
   },
 };
