@@ -192,9 +192,15 @@ export default function GrunkartMap() {
   const showRadRouten = mode === 'radrouten';
   const showBeleuchtung = mode === 'beleuchtung';
 
+  // OSM-Relationen, die im Park-Modus ausgeblendet werden sollen
+  const EXCLUDED_PARK_RELATION_IDS = ['relation/33947'];
+
   // MapLibre filter expression für Park-Only-Modus
   const parkFilter: FilterSpecification = showParkOnly
-    ? (['==', ['get', 'in-park'], 1] as FilterSpecification)
+    ? (['all',
+        ['==', ['get', 'in-park'], 1],
+        ['match', ['id'], EXCLUDED_PARK_RELATION_IDS, false, true],
+      ] as FilterSpecification)
     : true;
 
   return (
