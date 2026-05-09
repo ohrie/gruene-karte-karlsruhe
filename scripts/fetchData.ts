@@ -7,7 +7,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AREA_ID, RELATION_ID, OUTPUT_DIR } from './config.js';
+import { AREA_ID, RELATION_ID, OUTPUT_DIR, EXCLUDED_PARK_RELATIONS } from './config.js';
 import {
   runOverpassQuery,
   saveGeoJSON,
@@ -48,6 +48,15 @@ function cleanTmpParts(filename: string, count: number): void {
 // ---------------------------------------------------------------------------
 // Access-Filter: entfernt nicht öffentliche Features
 // ---------------------------------------------------------------------------
+
+function filterExcludedRelations(fc: ReturnType<typeof roundGeometry>): ReturnType<typeof roundGeometry> {
+  const before = fc.features.length;
+  const excludedIds = new Set(EXCLUDED_PARK_RELATIONS.map((id) => `relation/${id}`));
+  fc.features = fc.features.filter((f) => !excludedIds.has(f.id as string));
+  const removed = before - fc.features.length;
+  if (removed > 0) console.log(`  ✂  ${removed} Features aus Exclusion-Liste entfernt`);
+  return fc;
+}
 
 function filterPrivateAccess(fc: ReturnType<typeof roundGeometry>): ReturnType<typeof roundGeometry> {
   const before = fc.features.length;
@@ -237,7 +246,7 @@ async function main() {
       name: 'Grünflächen',
       filename: 'green-areas.geojson',
       query: [GREEN_AREAS_PARKS_QUERY, GREEN_AREAS_FOREST_QUERY, GREEN_AREAS_GROUND_QUERY],
-      postProcess: filterPrivateAccess,
+      postProcess: (fc) => filterPrivateAccess(filterExcludedRelations(fc)),
     },
     { name: 'Wasser', filename: 'water.geojson', query: WATER_QUERY },
     {

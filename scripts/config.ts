@@ -33,3 +33,11 @@ export const RELATION_ID = '62518';
 
 /** Output directory for GeoJSON files */
 export const OUTPUT_DIR = path.join(process.cwd(), 'public', 'data');
+
+/**
+ * OSM-Relationen, die von der Park-Karte ausgeschlossen werden sollen.
+ * Format: numerische OSM-Relation-ID (ohne Prefix).
+ */
+export const EXCLUDED_PARK_RELATIONS: number[] = [
+  33947,
+];
