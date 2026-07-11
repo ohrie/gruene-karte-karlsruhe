@@ -8,6 +8,7 @@
     "start": "next start",
     "fetch-data": "tsx scripts/fetchData.ts",
     "process-green-features": "tsx scripts/processGreenAreaFeatures.ts",
+    "generate-meta": "tsx scripts/generateMeta.ts",
     "process-radrouten": "tsx scripts/processRadrouten.ts",
     "fetch-highways-lighting": "tsx scripts/fetchHighwaysLighting.ts",
     "type-check": "tsc"

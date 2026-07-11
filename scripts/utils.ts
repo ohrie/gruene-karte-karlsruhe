@@ -45,6 +45,34 @@ export function saveGeoJSON(filename: string, data: FeatureCollection): void {
 }
 
 // ---------------------------------------------------------------------------
+// Datenstand-Metadaten
+// ---------------------------------------------------------------------------
+
+/**
+ * Ermittelt den jüngsten Änderungszeitpunkt aller GeoJSON-Dateien in public/data
+ * und schreibt ihn nach public/data/meta.json. Dadurch spiegelt der auf der Karte
+ * angezeigte Datenstand automatisch den tatsächlichen Stand der Daten wider.
+ */
+export function writeDataMeta(): void {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  const files = fs
+    .readdirSync(OUTPUT_DIR)
+    .filter((f) => f.endsWith('.geojson'))
+    .map((f) => path.join(OUTPUT_DIR, f));
+
+  let newest = 0;
+  for (const file of files) {
+    const mtime = fs.statSync(file).mtimeMs;
+    if (mtime > newest) newest = mtime;
+  }
+  if (newest === 0) newest = Date.now();
+
+  const updatedAt = new Date(newest).toISOString();
+  fs.writeFileSync(path.join(OUTPUT_DIR, 'meta.json'), JSON.stringify({ updatedAt }));
+  console.log(`  ✓ Datenstand aktualisiert: ${updatedAt.slice(0, 10)}`);
+}
+
+// ---------------------------------------------------------------------------
 // Koordinaten runden (5 Dezimalstellen ≈ 1m Präzision)
 // ---------------------------------------------------------------------------
 

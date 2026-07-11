@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeDataMeta } from './utils.js';
 
 // ---------------------------------------------------------------------------
 // GeoJSON-Typen (minimale lokale Typen, kein externer Import nötig)
@@ -360,5 +361,7 @@ for (const feature of greenAreasGeoJSON.features) {
 console.log(`  ${greenAreasInPark} Grünflächen-Features in Parks, ${greenAreasOutOfPark} außerhalb`);
 fs.writeFileSync(path.join(DATA_DIR, 'green-areas.geojson'), JSON.stringify(greenAreasGeoJSON), 'utf-8');
 console.log('  green-areas.geojson gespeichert');
+
+writeDataMeta();
 
 console.log('\nFertig.');

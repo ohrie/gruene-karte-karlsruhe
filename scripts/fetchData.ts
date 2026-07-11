@@ -14,6 +14,7 @@ import {
   delay,
   roundGeometry,
   processTreeDiameters,
+  writeDataMeta,
 } from './utils.js';
 
 const TMP_DIR = path.join(OUTPUT_DIR, '../tmp');
@@ -322,6 +323,8 @@ async function main() {
       await delay(3000);
     }
   }
+
+  writeDataMeta();
 
   console.log('\n✅ Fertig! Alle Daten in public/data/ gespeichert.');
 }

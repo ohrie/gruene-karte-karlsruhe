@@ -59,6 +59,14 @@ npm run fetch-data
 npm run process-green-features
 ```
 
+Beide Schritte schreiben automatisch `public/data/meta.json` mit dem jüngsten
+Datenstand. Die Karte liest diese Datei aus und zeigt links unten den Datenstand
+(Monat + Jahr) an. Bei Bedarf lässt sich `meta.json` auch separat neu erzeugen:
+
+```bash
+npm run generate-meta
+```
+
 Radrouten und Straßenbeleuchtung separat:
 
 ```bash

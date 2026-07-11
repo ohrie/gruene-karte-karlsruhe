@@ -118,6 +118,7 @@ export default function GrunkartMap() {
   const [outsideMask, setOutsideMask] = useState<FeatureCollection | null>(null);
   const [highwaysLighting, setHighwaysLighting] = useState<FeatureCollection | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [dataDate, setDataDate] = useState<string | null>(null);
 
   const [mode, setMode] = useState<MapMode>(() => {
     if (typeof window === 'undefined') return 'gruen';
@@ -166,6 +167,17 @@ export default function GrunkartMap() {
     load(`${basePath}/data/benches.geojson`, setBenches);
     load(`${basePath}/data/baumkataster.geojson`, setTrees);
     load(`${basePath}/data/radrouten.geojson`, setRadRouten);
+
+    // Datenstand (Monat + Jahr) automatisch aus meta.json ableiten
+    fetch(`${basePath}/data/meta.json`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((meta: { updatedAt?: string } | null) => {
+        if (!meta?.updatedAt) return;
+        const d = new Date(meta.updatedAt);
+        if (isNaN(d.getTime())) return;
+        setDataDate(new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(d));
+      })
+      .catch((err) => console.warn('Konnte meta.json nicht laden:', err));
   }, []);
 
   useEffect(() => {
@@ -436,6 +448,29 @@ export default function GrunkartMap() {
       >
         <Legend mode={mode} />
       </div>
+
+      {dataDate && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 12,
+            bottom: 24,
+            zIndex: 2,
+            background: 'rgba(255,255,255,0.92)',
+            borderRadius: 8,
+            padding: '6px 12px',
+            fontSize: 12,
+            lineHeight: 1.3,
+            color: '#2d5a27',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontWeight: 700 }}>Datenstand:</span>{' '}
+          <span style={{ color: '#333' }}>{dataDate}</span>
+        </div>
+      )}
     </div>
   );
 }
